@@ -1,14 +1,18 @@
 package com.itsaur.repository;
 
+import com.itsaur.dto.SearchComponent;
 import com.itsaur.model.CompanyQueryModel;
 import com.itsaur.model.EmployeeQueryModel;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Row;
+import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DBCompanyQueryRepository implements CompanyQueryRepository{
 
@@ -85,6 +89,78 @@ public class DBCompanyQueryRepository implements CompanyQueryRepository{
                                 Mono.from(result.map((row, meta) -> row.get(0, Long.class)))),
                 Connection::close);
     }
+
+    @Override
+    public Flux<CompanyQueryModel> paginatedFilterQuery(SearchComponent searchComponent, Integer page, Integer size) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT DISTINCT id, company_name, vat, address, total_employees," +
+                " created_at, updated_at FROM company_search_view ");
+        List<String> params = new ArrayList<>();
+
+        if(searchComponent != null) {
+            StringBuilder whereBuilder = new StringBuilder();
+            searchComponent.sqlBuild(whereBuilder, params);
+
+            if (!whereBuilder.isEmpty()) {
+                sql.append(" WHERE ").append(whereBuilder);
+            }
+        }
+        sql.append(" ORDER BY id");
+        sql.append(" LIMIT $").append(params.size() + 1);
+        sql.append(" OFFSET $").append(params.size() + 2);
+
+        int offset = size * page;
+
+        return Flux.usingWhen(cf.create(), conn -> {
+                    Statement statement = conn.createStatement(sql.toString());
+
+                    int index = 0;
+                    for (String param: params){
+                        statement.bind(index++, param);
+                    }
+                    statement.bind(index++, size);
+                    statement.bind(index, offset);
+
+                    return Flux.from(statement.execute()).flatMap(result -> result.map(this::mapRowExtra));
+                },
+                Connection::close);
+    }
+
+    @Override
+    public Mono<Long> countViewCompanies(SearchComponent searchComponent) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT id) FROM company_search_view ");
+        List<String> params = new ArrayList<>();
+
+        if (searchComponent != null) {
+            StringBuilder whereBuilder = new StringBuilder();
+            searchComponent.sqlBuild(whereBuilder, params);
+
+            if (!whereBuilder.isEmpty()) {
+                sql.append(" WHERE ").append(whereBuilder);
+            }
+        }
+
+        return Mono.usingWhen(
+                cf.create(),
+                connection -> {
+
+                    Statement statement = connection.createStatement(sql.toString());
+
+                    for (int i = 0; i < params.size(); i++) {
+                        statement.bind(i, params.get(i));
+                    }
+
+                    return Mono.from(statement.execute())
+                            .flatMap(result ->
+                                    Mono.from(result.map((row, meta) ->
+                                            row.get(0, Long.class)
+                                    ))
+                            );
+                },
+                Connection::close
+        );
+    }
+
 
     private CompanyQueryModel mapRowExtra(Row row, Object meta) {
         CompanyQueryModel companyQueryModel = new CompanyQueryModel();

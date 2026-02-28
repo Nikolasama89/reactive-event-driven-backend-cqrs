@@ -74,7 +74,8 @@ public class Application {
                 createResponseDTOSerializer,
                 companyQueryModelSerializer,
                 companyQueryModelListSerializer,
-                companyQueryModelPageSerializer
+                companyQueryModelPageSerializer,
+                searchRequestDTODeserializer
         );
 
 

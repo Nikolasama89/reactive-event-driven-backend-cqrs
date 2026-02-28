@@ -1,9 +1,6 @@
 package com.itsaur.handler;
 
-import com.itsaur.dto.CompanyCreateDTO;
-import com.itsaur.dto.CompanyUpdateDTO;
-import com.itsaur.dto.CreateResponseDTO;
-import com.itsaur.dto.PageDTO;
+import com.itsaur.dto.*;
 import com.itsaur.exceptions.*;
 import com.itsaur.model.Company;
 import com.itsaur.model.CompanyQueryModel;
@@ -29,6 +26,7 @@ public class CompanyHandler {
     private final Serializer<CompanyQueryModel> companyQueryModelSerializer;
     private final Serializer<List<CompanyQueryModel>> companyQueryListSerializer;
     private final Serializer<PageDTO<CompanyQueryModel>> companyQueryPageSerializer;
+    private final Deserializer<SearchComponent> searchRequestDeserializer;
 
 
     public CompanyHandler(
@@ -40,7 +38,8 @@ public class CompanyHandler {
             Serializer<CreateResponseDTO> responseSerializer,
             Serializer<CompanyQueryModel> companyQueryModelSerializer,
             Serializer<List<CompanyQueryModel>> companyQueryListSerializer,
-            Serializer<PageDTO<CompanyQueryModel>> companyQueryPageSerializer
+            Serializer<PageDTO<CompanyQueryModel>> companyQueryPageSerializer,
+            Deserializer<SearchComponent> searchRequestDeserializer
     ) {
         this.companyService = companyService;
         this.companyQueryService = companyQueryService;
@@ -51,6 +50,7 @@ public class CompanyHandler {
         this.companyQueryModelSerializer = companyQueryModelSerializer;
         this.companyQueryListSerializer = companyQueryListSerializer;
         this.companyQueryPageSerializer = companyQueryPageSerializer;
+        this.searchRequestDeserializer = searchRequestDeserializer;
     }
 
     public Mono<Void> getAllCompanies(HttpServerRequest req, HttpServerResponse res) {
@@ -199,6 +199,56 @@ public class CompanyHandler {
         });
     }
 
+    public Mono<Void> search(HttpServerRequest req, HttpServerResponse res) {
+
+        QueryStringDecoder queryStringDecoder = new QueryStringDecoder(req.uri());
+
+        // Αν δεν δωσει ο χρηστης
+        String pageParam = queryStringDecoder.parameters().getOrDefault("page", List.of("0")).get(0);
+        if(pageParam.isBlank()) {
+            pageParam = "0";
+        }
+
+        String sizeParam = queryStringDecoder.parameters().getOrDefault("size", List.of("10")).get(0);
+        if(sizeParam.isBlank()) {
+            sizeParam = "10";
+        }
+
+        int page = Integer.parseInt(pageParam);
+        int size = Integer.parseInt(sizeParam);
+
+        return req.receive()
+                .aggregate()
+                .asByteArray()
+                .defaultIfEmpty(new byte[0])
+                .flatMap(bytes ->{
+                    if (bytes.length == 0){
+                        return companyQueryService.getPage(page, size);
+                    }
+                    return Mono.fromCallable(() ->
+                                    searchRequestDeserializer.deserialize(bytes))
+                            .flatMap(result -> companyQueryService.getPaginatedSearchCompanies(result, page, size));
+                })
+                .flatMap(pageDTO -> {
+                    byte[] bytes = companyQueryPageSerializer.serialize(pageDTO);
+                    res.status(200);
+                    companyQueryModelSerializer.contentType(res);
+                    return res.sendByteArray(Mono.just(bytes)).then();
+                }).doOnError(error -> {
+                    error.printStackTrace();
+                    System.out.println("ERROR TYPE: " + error.getClass());
+                })
+                .onErrorResume(error -> {
+                    if (    error instanceof EntityInvalidArgumentException ||
+                            error instanceof SearchValueEmptyException ||
+                            error instanceof SearchValueCharacterLengthException ||
+                            error instanceof InvalidSearchValueException){
+                        return res.status(400).sendString(Mono.just(error.getMessage())).then();
+                    }
+                    return res.status(500).sendString(Mono.just("Internal Server Error")).then();
+                });
+    }
+
     public void companyRoutes(HttpServerRoutes routes) {
         routes
                 .get("/check", this::getAllCompanies)
@@ -206,6 +256,7 @@ public class CompanyHandler {
                 .get("/companies/{id}",this::getCompanyById)
                 .delete("/companies/{id}", this::deleteCompanyById)
                 .post("/companies", this::saveCompany)
-                .put("/companies/{id}", this::updateCompany);
+                .put("/companies/{id}", this::updateCompany)
+                .post("/companies/search", this::search);
     }
 }

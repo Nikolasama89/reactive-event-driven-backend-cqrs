@@ -1,8 +1,13 @@
 package com.itsaur.service;
 
+import com.itsaur.dto.ComplexSearchRequestDTO;
 import com.itsaur.dto.PageDTO;
+import com.itsaur.dto.SearchComponent;
+import com.itsaur.dto.SimpleSearchRequestDTO;
 import com.itsaur.exceptions.CompanyNotFoundException;
 import com.itsaur.exceptions.EntityInvalidArgumentException;
+import com.itsaur.exceptions.SearchValueCharacterLengthException;
+import com.itsaur.exceptions.SearchValueEmptyException;
 import com.itsaur.model.CompanyQueryModel;
 import com.itsaur.repository.CompanyQueryRepository;
 import reactor.core.publisher.Flux;
@@ -43,5 +48,59 @@ public class CompanyQueryServiceImpl implements CompanyQueryService{
             var total = tuple.getT2();
             return new PageDTO<>(content, page, size, total);
         });
+    }
+
+    @Override
+    public Mono<PageDTO<CompanyQueryModel>> getPaginatedSearchCompanies(SearchComponent searchComponent, int page, int size) {
+        if (page < 0 || size <= 0) {
+            return Mono.error(new EntityInvalidArgumentException("Page and size cannot be null"));
+        }
+
+        if (searchComponent instanceof SimpleSearchRequestDTO simpleSearchRequestDTO){
+            String value = simpleSearchRequestDTO.getValue();
+
+            if (value == null || value.trim().isEmpty()) {
+                return Mono.error(new SearchValueEmptyException("Search value can not be empty"));
+            }
+
+            if (value.length() > 50) {
+                return Mono.error(new SearchValueCharacterLengthException("Value must be 1 - 50 letters max."));
+            }
+        } else if (searchComponent instanceof ComplexSearchRequestDTO complexRequestDto) {
+            if (complexRequestDto.getConditions() == null || complexRequestDto.getConditions().isEmpty()){
+                return Mono.error(new EntityInvalidArgumentException("Conditions can not be empty"));
+            }
+            for (SearchComponent child: complexRequestDto.getConditions()){
+                if (child instanceof SimpleSearchRequestDTO simpleChild){
+                    String value = simpleChild.getValue();
+                    if (value == null || value.trim().isEmpty()) {
+                        return Mono.error(new SearchValueEmptyException("Search value can not be empty"));
+                    }
+
+                    if (value.length() > 50) {
+                        return Mono.error(new SearchValueCharacterLengthException("Value must be 1 - 50 letters max."));
+                    }
+                }
+            }
+        }
+
+        if (searchComponent == null){
+            return Mono.zip(
+                    companyQueryRepository.findPage(page, size).collectList(), companyQueryRepository.countAll()
+            ).map(tuple -> {
+                var content = tuple.getT1();
+                var total = tuple.getT2();
+                return new PageDTO<>(content, page, size, total);
+            });
+        } else {
+            return Mono.zip(companyQueryRepository.paginatedFilterQuery(searchComponent, page, size).collectList(), companyQueryRepository.countViewCompanies(searchComponent))
+                    .map(tuple -> {
+                        var content = tuple.getT1();
+                        var total = tuple.getT2();
+                        return new PageDTO<>(content, page, size, total);
+                    });
+        }
+
+
     }
 }
