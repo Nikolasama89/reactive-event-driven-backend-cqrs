@@ -44,14 +44,4 @@ public class SimpleSearchRequestDTO implements SearchComponent {
     public void setValue(String value) {
         this.value = value;
     }
-
-    @Override
-    public void sqlBuild(StringBuilder sqlString, List<String> params) {
-        DBConditionStrategy strategy = DBConditionStrategyFactory.getStrategy(type);
-
-        int index = params.size();
-        params.add(strategy.searchValue(value));
-
-        sqlString.append(strategy.buildSearch(field.getColumn(), index + 1));
-    }
 }

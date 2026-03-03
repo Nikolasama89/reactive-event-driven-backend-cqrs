@@ -32,20 +32,4 @@ public class ComplexSearchRequestDTO implements SearchComponent {
     public void setConditions(List<SearchComponent> conditions) {
         this.conditions = conditions;
     }
-
-    @Override
-    public void sqlBuild(StringBuilder sqlString, List<String> params) {
-
-        String joiner = type == LogicOperator.AND  ? " AND " : " OR ";
-        List<String> parts = new ArrayList<>();
-
-        for (SearchComponent condition : conditions) {
-            StringBuilder builder = new StringBuilder();
-            condition.sqlBuild(builder, params);
-            parts.add(builder.toString());
-        }
-        sqlString.append("(");
-        sqlString.append(String.join(joiner, parts));
-        sqlString.append(")");
-    }
 }
