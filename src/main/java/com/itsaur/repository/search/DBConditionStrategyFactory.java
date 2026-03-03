@@ -8,7 +8,7 @@ public class DBConditionStrategyFactory {
 
     private static final Map<TypeCondition, DBConditionStrategy> strategies = Map.of(
             TypeCondition.EQUALS, new DBEqualsStrategy(),
-                TypeCondition.STARTSWITH, new DBStartsWithStrategy(),
+            TypeCondition.STARTSWITH, new DBStartsWithStrategy(),
             TypeCondition.ENDSWITH, new DBEndsWithStrategy(),
             TypeCondition.CONTAINS, new DBContainsStrategy()
     );
