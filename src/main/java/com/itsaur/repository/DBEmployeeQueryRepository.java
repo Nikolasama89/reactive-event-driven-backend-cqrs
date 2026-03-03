@@ -160,17 +160,16 @@ public class DBEmployeeQueryRepository implements EmployeeQueryRepository {
 
     public Flux<EmployeeQueryModel> filterQuery(SearchComponent searchComponent) {
 
+        SQLSearchCompiler compiler = new SQLSearchCompiler();
+        SQLFilter filter = compiler.compile(searchComponent);
+
         StringBuilder sql = new StringBuilder("SELECT * FROM employee_view ");
         List<String> params = new ArrayList<>();
 
 
         if(searchComponent != null) {
-            StringBuilder whereBuilder = new StringBuilder();
-            searchComponent.sqlBuild(whereBuilder, params);
 
-            if (!whereBuilder.isEmpty()) {
-                sql.append(" WHERE ").append(whereBuilder);
-            }
+            sql.append(" WHERE ").append(filter.getWhereClause());
         }
         return Flux.usingWhen(
                 cf.create(),
@@ -192,20 +191,20 @@ public class DBEmployeeQueryRepository implements EmployeeQueryRepository {
 
     @Override
     public Flux<EmployeeQueryModel> paginatedFilterQuery(SearchComponent searchComponent, Integer page, Integer size) {
+
+        SQLSearchCompiler compiler = new SQLSearchCompiler();
+        SQLFilter filter = compiler.compile(searchComponent);
+
         StringBuilder sql = new StringBuilder("SELECT * FROM employee_view ");
         List<String> params = new ArrayList<>();
 
         if(searchComponent != null) {
-            StringBuilder whereBuilder = new StringBuilder();
-            searchComponent.sqlBuild(whereBuilder, params);
 
-            if (!whereBuilder.isEmpty()) {
-                sql.append(" WHERE ").append(whereBuilder);
-            }
+            sql.append(" WHERE ").append(filter.getWhereClause());
         }
         sql.append(" ORDER BY id");
-        sql.append(" LIMIT $").append(params.size() + 1);
-        sql.append(" OFFSET $").append(params.size() + 2);
+        sql.append(" LIMIT $").append(filter.getParams().size() + 1);
+        sql.append(" OFFSET $").append(filter.getParams().size() + 2);
 
         int offset = size * page;
 
@@ -213,7 +212,7 @@ public class DBEmployeeQueryRepository implements EmployeeQueryRepository {
             Statement statement = conn.createStatement(sql.toString());
 
             int index = 0;
-            for (String param: params){
+            for (Object param: filter.getParams()){
                 statement.bind(index++, param);
             }
             statement.bind(index++, size);
@@ -226,16 +225,15 @@ public class DBEmployeeQueryRepository implements EmployeeQueryRepository {
 
     @Override
     public Mono<Long> countViewEmployees(SearchComponent searchComponent) {
+
+        SQLSearchCompiler compiler = new SQLSearchCompiler();
+        SQLFilter filter = compiler.compile(searchComponent);
+
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM employee_view ");
-        List<String> params = new ArrayList<>();
 
         if (searchComponent != null) {
-            StringBuilder whereBuilder = new StringBuilder();
-            searchComponent.sqlBuild(whereBuilder, params);
 
-            if (!whereBuilder.isEmpty()) {
-                sql.append(" WHERE ").append(whereBuilder);
-            }
+            sql.append(" WHERE ").append(filter.getWhereClause());
         }
 
         return Mono.usingWhen(
@@ -244,8 +242,8 @@ public class DBEmployeeQueryRepository implements EmployeeQueryRepository {
 
                     Statement statement = connection.createStatement(sql.toString());
 
-                    for (int i = 0; i < params.size(); i++) {
-                        statement.bind(i, params.get(i));
+                    for (int i = 0; i < filter.getParams().size(); i++) {
+                        statement.bind(i, filter.getParams().get(i));
                     }
 
                     return Mono.from(statement.execute())

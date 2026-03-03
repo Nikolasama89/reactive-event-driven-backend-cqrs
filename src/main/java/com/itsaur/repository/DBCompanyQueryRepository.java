@@ -90,24 +90,28 @@ public class DBCompanyQueryRepository implements CompanyQueryRepository{
                 Connection::close);
     }
 
+
+
     @Override
     public Flux<CompanyQueryModel> paginatedFilterQuery(SearchComponent searchComponent, Integer page, Integer size) {
+
+        SQLSearchCompiler compiler = new SQLSearchCompiler();
+        SQLFilter filter = compiler.compile(searchComponent);
+
         StringBuilder sql = new StringBuilder(
                 "SELECT DISTINCT id, company_name, vat, address, total_employees," +
                 " created_at, updated_at FROM company_search_view ");
         List<String> params = new ArrayList<>();
 
-        if(searchComponent != null) {
-            StringBuilder whereBuilder = new StringBuilder();
-            searchComponent.sqlBuild(whereBuilder, params);
-
-            if (!whereBuilder.isEmpty()) {
-                sql.append(" WHERE ").append(whereBuilder);
-            }
+        if(filter != null && filter.getWhereClause() != null && !filter.getWhereClause().isBlank()) {
+            sql.append(" WHERE ").append(filter.getWhereClause());
         }
+
+        int base = filter.getParams().size();
         sql.append(" ORDER BY id");
-        sql.append(" LIMIT $").append(params.size() + 1);
-        sql.append(" OFFSET $").append(params.size() + 2);
+
+        sql.append(" LIMIT $").append(base + 1);
+        sql.append(" OFFSET $").append(base + 2);
 
         int offset = size * page;
 
@@ -115,7 +119,7 @@ public class DBCompanyQueryRepository implements CompanyQueryRepository{
                     Statement statement = conn.createStatement(sql.toString());
 
                     int index = 0;
-                    for (String param: params){
+                    for (Object param: filter.getParams()){
                         statement.bind(index++, param);
                     }
                     statement.bind(index++, size);
@@ -128,16 +132,14 @@ public class DBCompanyQueryRepository implements CompanyQueryRepository{
 
     @Override
     public Mono<Long> countViewCompanies(SearchComponent searchComponent) {
+
+        SQLSearchCompiler compiler = new SQLSearchCompiler();
+        SQLFilter filter = compiler.compile(searchComponent);
+
         StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT id) FROM company_search_view ");
-        List<String> params = new ArrayList<>();
 
-        if (searchComponent != null) {
-            StringBuilder whereBuilder = new StringBuilder();
-            searchComponent.sqlBuild(whereBuilder, params);
-
-            if (!whereBuilder.isEmpty()) {
-                sql.append(" WHERE ").append(whereBuilder);
-            }
+        if (filter != null && filter.getWhereClause() != null && !filter.getWhereClause().isBlank()) {
+            sql.append(" WHERE ").append(filter.getWhereClause());
         }
 
         return Mono.usingWhen(
@@ -146,8 +148,8 @@ public class DBCompanyQueryRepository implements CompanyQueryRepository{
 
                     Statement statement = connection.createStatement(sql.toString());
 
-                    for (int i = 0; i < params.size(); i++) {
-                        statement.bind(i, params.get(i));
+                    for (int i = 0; i < filter.getParams().size(); i++) {
+                        statement.bind(i, filter.getParams().get(i));
                     }
 
                     return Mono.from(statement.execute())
