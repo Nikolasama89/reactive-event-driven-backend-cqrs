@@ -93,7 +93,7 @@ public class CompanyQueryServiceImpl implements CompanyQueryService{
                 return new PageDTO<>(content, page, size, total);
             });
         } else {
-            return Mono.zip(companyQueryRepository.paginatedFilterQuery(searchComponent, page, size).collectList(), companyQueryRepository.countViewCompanies(searchComponent))
+            return Mono.zip(companyQueryRepository.paginatedCompanyFilterQuery(searchComponent, page, size).collectList(), companyQueryRepository.countViewCompanies(searchComponent))
                     .map(tuple -> {
                         var content = tuple.getT1();
                         var total = tuple.getT2();

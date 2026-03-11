@@ -94,7 +94,7 @@ public class DBCompanyQueryRepository implements CompanyQueryRepository{
 
 
     @Override
-    public Flux<CompanyQueryModel> paginatedFilterQuery(SearchComponent searchComponent, Integer page, Integer size) {
+    public Flux<CompanyQueryModel> paginatedCompanyFilterQuery(SearchComponent searchComponent, Integer page, Integer size) {
 
         SQLSearch compiler = new SQLSearch();
         SQLFilter filter = compiler.handle(searchComponent);

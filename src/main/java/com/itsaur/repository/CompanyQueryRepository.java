@@ -1,7 +1,6 @@
 package com.itsaur.repository;
 
 import com.itsaur.dto.SearchComponent;
-import com.itsaur.model.Company;
 import com.itsaur.model.CompanyQueryModel;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -11,6 +10,6 @@ public interface CompanyQueryRepository {
     Flux<CompanyQueryModel> getAllCompanies();
     Flux<CompanyQueryModel> findPage(Integer page, Integer size);
     Mono<Long> countAll();
-    Flux<CompanyQueryModel> paginatedFilterQuery(SearchComponent searchComponent, Integer page, Integer size);
+    Flux<CompanyQueryModel> paginatedCompanyFilterQuery(SearchComponent searchComponent, Integer page, Integer size);
     Mono<Long> countViewCompanies(SearchComponent searchComponent);
 }
