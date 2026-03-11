@@ -2,6 +2,8 @@ package com.itsaur.repository;
 
 import com.itsaur.dto.SearchComponent;
 import com.itsaur.model.EmployeeQueryModel;
+import com.itsaur.repository.search.SQLFilter;
+import com.itsaur.repository.search.SQLSearch;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Row;
@@ -160,8 +162,8 @@ public class DBEmployeeQueryRepository implements EmployeeQueryRepository {
 
     public Flux<EmployeeQueryModel> filterQuery(SearchComponent searchComponent) {
 
-        SQLSearchCompiler compiler = new SQLSearchCompiler();
-        SQLFilter filter = compiler.compile(searchComponent);
+        SQLSearch compiler = new SQLSearch();
+        SQLFilter filter = compiler.handle(searchComponent);
 
         StringBuilder sql = new StringBuilder("SELECT * FROM employee_view ");
         List<String> params = new ArrayList<>();
@@ -192,8 +194,8 @@ public class DBEmployeeQueryRepository implements EmployeeQueryRepository {
     @Override
     public Flux<EmployeeQueryModel> paginatedFilterQuery(SearchComponent searchComponent, Integer page, Integer size) {
 
-        SQLSearchCompiler compiler = new SQLSearchCompiler();
-        SQLFilter filter = compiler.compile(searchComponent);
+        SQLSearch compiler = new SQLSearch();
+        SQLFilter filter = compiler.handle(searchComponent);
 
         StringBuilder sql = new StringBuilder("SELECT * FROM employee_view ");
         List<String> params = new ArrayList<>();
@@ -226,8 +228,8 @@ public class DBEmployeeQueryRepository implements EmployeeQueryRepository {
     @Override
     public Mono<Long> countViewEmployees(SearchComponent searchComponent) {
 
-        SQLSearchCompiler compiler = new SQLSearchCompiler();
-        SQLFilter filter = compiler.compile(searchComponent);
+        SQLSearch compiler = new SQLSearch();
+        SQLFilter filter = compiler.handle(searchComponent);
 
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM employee_view ");
 

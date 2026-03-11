@@ -1,4 +1,4 @@
-package com.itsaur.repository;
+package com.itsaur.repository.search;
 
 import java.util.List;
 

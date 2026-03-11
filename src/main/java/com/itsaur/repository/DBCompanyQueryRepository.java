@@ -2,7 +2,8 @@ package com.itsaur.repository;
 
 import com.itsaur.dto.SearchComponent;
 import com.itsaur.model.CompanyQueryModel;
-import com.itsaur.model.EmployeeQueryModel;
+import com.itsaur.repository.search.SQLFilter;
+import com.itsaur.repository.search.SQLSearch;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Row;
@@ -95,8 +96,8 @@ public class DBCompanyQueryRepository implements CompanyQueryRepository{
     @Override
     public Flux<CompanyQueryModel> paginatedFilterQuery(SearchComponent searchComponent, Integer page, Integer size) {
 
-        SQLSearchCompiler compiler = new SQLSearchCompiler();
-        SQLFilter filter = compiler.compile(searchComponent);
+        SQLSearch compiler = new SQLSearch();
+        SQLFilter filter = compiler.handle(searchComponent);
 
         StringBuilder sql = new StringBuilder(
                 "SELECT DISTINCT id, company_name, vat, address, total_employees," +
@@ -133,8 +134,8 @@ public class DBCompanyQueryRepository implements CompanyQueryRepository{
     @Override
     public Mono<Long> countViewCompanies(SearchComponent searchComponent) {
 
-        SQLSearchCompiler compiler = new SQLSearchCompiler();
-        SQLFilter filter = compiler.compile(searchComponent);
+        SQLSearch compiler = new SQLSearch();
+        SQLFilter filter = compiler.handle(searchComponent);
 
         StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT id) FROM company_search_view ");
 

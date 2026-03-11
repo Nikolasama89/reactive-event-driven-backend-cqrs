@@ -1,20 +1,18 @@
-package com.itsaur.repository;
+package com.itsaur.repository.search;
 
 import com.itsaur.dto.ComplexSearchRequestDTO;
 import com.itsaur.dto.SearchComponent;
 import com.itsaur.dto.SimpleSearchRequestDTO;
 import com.itsaur.dto.enums.LogicOperator;
-import com.itsaur.repository.search.DBConditionStrategy;
-import com.itsaur.repository.search.DBConditionStrategyFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class SQLSearchCompiler implements SearchCompiler<SQLFilter>{
+public class SQLSearch implements SearchHandler<SQLFilter> {
 
     @Override
-    public SQLFilter compile(SearchComponent root) {
+    public SQLFilter handle(SearchComponent root) {
         if (root == null){
             return new SQLFilter("", List.of());
         }
