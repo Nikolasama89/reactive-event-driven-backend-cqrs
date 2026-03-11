@@ -54,15 +54,21 @@ public class DBEmployeeRepository implements EmployeeRepository {
                     Connection::close
             );
         } else {
-            String sql = "UPDATE employees SET firstname = $1, lastname = $2, updated_at = NOW() WHERE id = $3 RETURNING firstname, lastname, updated_at";
+            String sql = "UPDATE employees SET firstname = $1, lastname = $2, email = $3, company_id = $4, updated_at = NOW() WHERE id = $5 RETURNING id, firstname, lastname, email, company_id, created_at, updated_at";
             return Mono.usingWhen(Mono.from(cf.create()), conn -> Mono.from(conn.createStatement(sql)
                             .bind(0, employee.getFirstname())
                             .bind(1, employee.getLastname())
-                            .bind(2, id)
+                            .bind(2, employee.getEmail())
+                            .bind(3, employee.getCompanyId())
+                            .bind(4, id)
                             .execute()).flatMap(result -> Mono.from(result.map((row, meta) -> {
                                 Employee e = new Employee();
+                                e.setId(row.get("id", Long.class));
                                 e.setFirstname(row.get("firstname", String.class));
                                 e.setLastname(row.get("lastname", String.class));
+                                e.setEmail(row.get("email", String.class));
+                                e.setCompanyId(row.get("company_id", Long.class));
+                                e.setCreatedAt(row.get("created_at", OffsetDateTime.class));
                                 e.setUpdatedAt(row.get("updated_at", OffsetDateTime.class));
                                 return e;
                             }))

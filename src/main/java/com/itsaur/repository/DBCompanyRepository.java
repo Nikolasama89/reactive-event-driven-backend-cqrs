@@ -47,17 +47,21 @@ public class DBCompanyRepository implements CompanyRepository {
             String sql = "INSERT INTO companies (company_name, vat, address) VALUES ($1, $2, $3) RETURNING id, company_name, vat, address";
             return Mono.usingWhen(Mono.from(cf.create()), conn -> doCreateCompany(conn, sql, company), Connection::close);
         } else {
-            String sql = "UPDATE companies SET company_name = $1, vat = $2, address = $3, updated_at = NOW() WHERE id = $4 RETURNING company_name, vat, address, updated_at";
+            String sql = "UPDATE companies SET company_name = $1, vat = $2, address = $3, updated_at = NOW() WHERE id = $4 RETURNING id, company_name, vat, address, created_at, updated_at";
             return Mono.usingWhen(Mono.from(cf.create()), conn -> Mono.from(conn.createStatement(sql)
                             .bind(0, company.getCompanyName())
                             .bind(1, company.getVat())
                             .bind(2, company.getAddress())
                             .bind(3, id)
                             .execute()).flatMap(result -> Mono.from(result.map((row, meta) -> {
+
                                 Company c = new Company();
+                                c.setId(row.get("id", Long.class));
                                 c.setCompanyName(row.get("company_name", String.class));
                                 c.setVat(row.get("vat", String.class));
                                 c.setAddress(row.get("address", String.class));
+                                c.setCreatedAt(row.get("created_at", OffsetDateTime.class));
+                                c.setUpdatedAt(row.get("updated_at", OffsetDateTime.class));
                                 return c;
                             }))
                     ), Connection::close
