@@ -69,13 +69,15 @@ public class CompanyServiceImpl implements CompanyService {
             return Mono.error(new CompanyAddressRequiredException("Company address is required."));
         }
 
-        Company company = new Company();
-        company.setCompanyName(companyUpdateDTO.getCompanyName());
-        company.setVat(companyUpdateDTO.getVat());
-        company.setAddress(companyUpdateDTO.getAddress());
-
-        return companyRepository.createOrUpdateCompany(id, company).switchIfEmpty(
-                Mono.error(new CompanyNotFoundException("Company with id: " + id + " not found"))).then();
+        return companyRepository.getCompanyById(id)
+                .switchIfEmpty(Mono.error(new CompanyNotFoundException("Company with id: " + id + " not found")))
+                .flatMap(existing -> {
+                    existing.setCompanyName(companyUpdateDTO.getCompanyName());
+                    existing.setVat(companyUpdateDTO.getVat());
+                    existing.setAddress(companyUpdateDTO.getAddress());
+                    return companyRepository.createOrUpdateCompany(id, existing);
+                })
+                .then();
     }
 
     @Override

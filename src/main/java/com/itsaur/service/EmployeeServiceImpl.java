@@ -80,12 +80,14 @@ public class EmployeeServiceImpl implements EmployeeService {
             return Mono.error(new LastnameInvalidCharacterLengthException("Lastname must be between 3 and 50 characters"));
         }
 
-        Employee employee = new Employee();
-        employee.setFirstname(employeeUpdateDTO.getFirstname());
-        employee.setLastname(employeeUpdateDTO.getLastname());
-
-        return employeeRepository.createOrUpdateEmployee(id, employee)
-                .switchIfEmpty(Mono.error(new EmployeeNotFoundException("Employee with id: " + id + " not found"))).then();
+        return employeeRepository.getEmployeeById(id)
+                .switchIfEmpty(Mono.error(new EmployeeNotFoundException("Employee with id: " + id + " not found.")))
+                .flatMap(employee -> {
+                    employee.setFirstname(employeeUpdateDTO.getFirstname());
+                    employee.setLastname(employeeUpdateDTO.getLastname());
+                    return employeeRepository.createOrUpdateEmployee(id, employee);
+                })
+                .then();
     }
 
     @Override
