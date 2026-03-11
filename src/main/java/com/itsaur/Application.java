@@ -21,19 +21,41 @@ import java.util.List;
 public class Application {
 
     public static void main(String[] args) {
-        ConnectionFactory connectionFactory = DbConnector.getPool();
+        String storageType = System.getenv().getOrDefault("STORAGE_TYPE", "sql");
 
-        // Repositories
-        EmployeeRepository dbEmployeeRepository =  new DBEmployeeRepository(connectionFactory);
-        EmployeeQueryRepository dbEmployeeQueryRepository = new DBEmployeeQueryRepository(connectionFactory);
-        CompanyRepository dbCompanyRepository = new DBCompanyRepository(connectionFactory);
-        CompanyQueryRepository dbCompanyQUeryRepository = new DBCompanyQueryRepository(connectionFactory);
+        EmployeeRepository employeeRepository;
+        EmployeeQueryRepository employeeQueryRepository;
+        CompanyRepository companyRepository;
+        CompanyQueryRepository companyQueryRepository;
+
+        if (storageType.equalsIgnoreCase("memory")) {
+
+            InMemoryStorage storage = new InMemoryStorage();
+            InMemoryEmployeeSearch employeeSearch = new InMemoryEmployeeSearch(storage);
+            InMemoryCompanySearch companySearch = new InMemoryCompanySearch(storage);
+            employeeRepository = new InMemoryEmployeeRepository(storage);
+            employeeQueryRepository = new InMemoryEmployeeQueryRepository(storage, employeeSearch);
+            companyRepository = new InMemoryCompanyRepository(storage);
+            companyQueryRepository = new InMemoryCompanyQueryRepository(storage, companySearch);
+
+            System.out.println("Running IN-MEMORY");
+
+        } else {
+
+            ConnectionFactory connectionFactory = DbConnector.getPool();
+
+            employeeRepository = new DBEmployeeRepository(connectionFactory);
+            employeeQueryRepository = new DBEmployeeQueryRepository(connectionFactory);
+            companyRepository = new DBCompanyRepository(connectionFactory);
+            companyQueryRepository = new DBCompanyQueryRepository(connectionFactory);
+            System.out.println("Running with SQL storage");
+        }
 
         // Services
-        EmployeeService employeeService = new EmployeeServiceImpl(dbEmployeeRepository,  dbCompanyRepository);
-        CompanyService companyService = new CompanyServiceImpl(dbCompanyRepository);
-        EmployeeQueryService employeeQueryService = new EmployeeQueryServiceImpl(dbEmployeeQueryRepository);
-        CompanyQueryService companyQueryService = new CompanyQueryServiceImpl(dbCompanyQUeryRepository);
+        EmployeeService employeeService = new EmployeeServiceImpl(employeeRepository,  companyRepository);
+        CompanyService companyService = new CompanyServiceImpl(companyRepository);
+        EmployeeQueryService employeeQueryService = new EmployeeQueryServiceImpl(employeeQueryRepository);
+        CompanyQueryService companyQueryService = new CompanyQueryServiceImpl(companyQueryRepository);
 
         // Serializers/Deserializers
         Serializer<Employee> employeeSerializer = new JSONEmployeeSerializer();
