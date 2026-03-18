@@ -85,26 +85,4 @@ public class Company {
                 ", updatedAt=" + updatedAt +
                 '}';
     }
-
-    public Company parseFromJson(String jsonObject) {
-        JSONObject json = new JSONObject(jsonObject);
-        String companyName = json.getString("company_name").trim().toLowerCase();
-        companyName = capitalizeFirstLetter(companyName);
-        vat = json.getString("vat").trim();
-        String address = json.getString("address").trim().toLowerCase();
-        address = capitalizeFirstLetter(address);
-
-        this.companyName = companyName;
-        this.address = address;
-
-        return this;
-
-    }
-
-    public String capitalizeFirstLetter(String word) {
-        if (word == null || word.isEmpty()) {
-            return word;
-        }
-        return word.substring(0, 1).toUpperCase() + word.substring(1);
-    }
 }

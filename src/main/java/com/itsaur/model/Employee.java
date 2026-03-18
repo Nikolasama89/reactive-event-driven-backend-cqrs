@@ -105,42 +105,4 @@ public class Employee {
                 ", updatedAt=" + updatedAt +
                 '}';
     }
-
-    public Employee parseFromJsonCreate(String jsonObject) {
-        JSONObject json = new JSONObject(jsonObject);
-        String firstname = json.getString("firstname").trim().toLowerCase();
-        firstname = capitalizeFirstLetter(firstname);
-        String lastname = json.getString("lastname").trim().toLowerCase();
-        lastname = capitalizeFirstLetter(lastname);
-        String email = json.getString("email").trim().toLowerCase();
-        long companyId = json.getLong("companyId");
-
-        this.firstname = firstname;
-        this.lastname = lastname;
-        this.email = email;
-        this.companyId = companyId;
-
-        return this;
-    }
-
-    public Employee parseFromJsonUpdate(String jsonObject) {
-        JSONObject json = new JSONObject(jsonObject);
-        String firstname = json.getString("firstname").trim().toLowerCase();
-        firstname = capitalizeFirstLetter(firstname);
-        String lastname = json.getString("lastname").trim().toLowerCase();
-        lastname = capitalizeFirstLetter(lastname);
-
-        this.firstname = firstname;
-        this.lastname = lastname;
-
-        return this;
-    }
-
-
-    public String capitalizeFirstLetter(String word) {
-        if (word == null || word.isEmpty()) {
-            return word;
-        }
-        return word.substring(0, 1).toUpperCase() + word.substring(1);
-    }
 }
