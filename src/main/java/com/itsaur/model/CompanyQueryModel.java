@@ -1,5 +1,8 @@
 package com.itsaur.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.OffsetDateTime;
 
 public class CompanyQueryModel {
@@ -7,8 +10,11 @@ public class CompanyQueryModel {
     private String companyName;
     private String vat;
     private String address;
+    @JsonProperty("total_employees")
     private Long totalEmployees;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime createdAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime updatedAt;
 
     public CompanyQueryModel(){}
