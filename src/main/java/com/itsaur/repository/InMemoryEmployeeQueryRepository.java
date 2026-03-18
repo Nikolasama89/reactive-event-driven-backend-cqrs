@@ -53,7 +53,7 @@ public class InMemoryEmployeeQueryRepository implements EmployeeQueryRepository{
 
         return getAllEmployees()
                 .filter(employee ->
-                        employee.getLastName() != null && employee.getLastName().toLowerCase().contains(lastName.toLowerCase()))
+                        employee.getLastname() != null && employee.getLastname().toLowerCase().contains(lastName.toLowerCase()))
                 .skip(offset)
                 .take(size);
     }
@@ -64,7 +64,7 @@ public class InMemoryEmployeeQueryRepository implements EmployeeQueryRepository{
 
         return getAllEmployees()
                 .filter(employee ->
-                        employee.getFirstName() != null && employee.getFirstName().toLowerCase().contains(firstName.toLowerCase()))
+                        employee.getFirstname() != null && employee.getFirstname().toLowerCase().contains(firstName.toLowerCase()))
                 .skip(offset)
                 .take(size);
     }
@@ -73,7 +73,7 @@ public class InMemoryEmployeeQueryRepository implements EmployeeQueryRepository{
     public Mono<Long> countAllByFirstName(String firstName) {
         return getAllEmployees()
                 .filter(employee ->
-                        employee.getFirstName() != null && employee.getFirstName().toLowerCase().contains(firstName.toLowerCase()))
+                        employee.getFirstname() != null && employee.getFirstname().toLowerCase().contains(firstName.toLowerCase()))
                 .count();
     }
 
@@ -81,7 +81,7 @@ public class InMemoryEmployeeQueryRepository implements EmployeeQueryRepository{
     public Mono<Long> countAllByLastName(String lastName) {
         return getAllEmployees()
                 .filter(employee ->
-                        employee.getLastName() != null && employee.getLastName().toLowerCase().contains(lastName.toLowerCase()))
+                        employee.getLastname() != null && employee.getLastname().toLowerCase().contains(lastName.toLowerCase()))
                 .count();
     }
 
@@ -116,8 +116,8 @@ public class InMemoryEmployeeQueryRepository implements EmployeeQueryRepository{
 
         EmployeeQueryModel model = new EmployeeQueryModel();
         model.setId(employee.getId());
-        model.setFirstName(employee.getFirstname());
-        model.setLastName(employee.getLastname());
+        model.setFirstname(employee.getFirstname());
+        model.setLastname(employee.getLastname());
         model.setEmail(employee.getEmail());
         model.setCompanyId(employee.getCompanyId());
 

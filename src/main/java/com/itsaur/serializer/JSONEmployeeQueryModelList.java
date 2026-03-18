@@ -15,8 +15,8 @@ public class JSONEmployeeQueryModelList implements Serializer<List<EmployeeQuery
         for (EmployeeQueryModel employee : object) {
             JSONObject json = new JSONObject();
             json.put("id", employee.getId());
-            json.put("firstname", employee.getFirstName());
-            json.put("lastname", employee.getLastName());
+            json.put("firstname", employee.getFirstname());
+            json.put("lastname", employee.getLastname());
             json.put("email", employee.getEmail());
             json.put("companyId", employee.getCompanyId());
             json.put("company_name", employee.getCompanyName());

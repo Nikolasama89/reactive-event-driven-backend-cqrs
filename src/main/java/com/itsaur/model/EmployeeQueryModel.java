@@ -1,27 +1,31 @@
 package com.itsaur.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.OffsetDateTime;
 
 public class EmployeeQueryModel {
     private Long id;
-    private String firstName;
-    private String lastName;
+    private String firstname;
+    private String lastname;
     private String email;
     private Long companyId;
     private String companyName;
     private String companyAddress;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime createdAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime updatedAt;
 
     public EmployeeQueryModel() {
     }
 
     public EmployeeQueryModel(
-            Long id, String firstName, String lastName, String email, Long companyId,
+            Long id, String firstname, String lastname, String email, Long companyId,
             String companyName, String companyAddress, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
         this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
+        this.firstname = firstname;
+        this.lastname = lastname;
         this.email = email;
         this.companyId = companyId;
         this.companyName = companyName;
@@ -38,20 +42,20 @@ public class EmployeeQueryModel {
         this.id = id;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public String getFirstname() {
+        return firstname;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public void setFirstname(String firstname) {
+        this.firstname = firstname;
     }
 
-    public String getLastName() {
-        return lastName;
+    public String getLastname() {
+        return lastname;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
     }
 
     public String getEmail() {
@@ -106,8 +110,8 @@ public class EmployeeQueryModel {
     public String toString() {
         return "EmployeeQueryModel{" +
                 "id=" + id +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
+                ", firstName='" + firstname + '\'' +
+                ", lastName='" + lastname + '\'' +
                 ", email='" + email + '\'' +
                 ", companyId=" + companyId +
                 ", companyName='" + companyName + '\'' +

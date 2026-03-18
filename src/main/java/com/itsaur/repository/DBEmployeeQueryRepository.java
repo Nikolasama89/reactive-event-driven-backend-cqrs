@@ -63,8 +63,8 @@ public class DBEmployeeQueryRepository implements EmployeeQueryRepository {
     private EmployeeQueryModel mapRowExtra(Row row, Object meta) {
         EmployeeQueryModel employeeQueryModel = new EmployeeQueryModel();
         employeeQueryModel.setId(row.get("id", Long.class));
-        employeeQueryModel.setFirstName(row.get("firstname", String.class));
-        employeeQueryModel.setLastName(row.get("lastname", String.class));
+        employeeQueryModel.setFirstname(row.get("firstname", String.class));
+        employeeQueryModel.setLastname(row.get("lastname", String.class));
         employeeQueryModel.setEmail(row.get("email", String.class));
         employeeQueryModel.setCompanyId(row.get("company_id", Long.class));
         employeeQueryModel.setCompanyName(row.get("company_name", String.class));

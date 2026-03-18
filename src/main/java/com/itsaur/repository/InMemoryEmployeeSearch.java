@@ -62,9 +62,9 @@ public class InMemoryEmployeeSearch implements SearchHandler<Predicate<EmployeeQ
 
         return employeeQueryModel -> switch (employeeField){
 
-            case FIRSTNAME -> strategy.checkValue(employeeQueryModel.getFirstName().toLowerCase(), value);
+            case FIRSTNAME -> strategy.checkValue(employeeQueryModel.getFirstname().toLowerCase(), value);
 
-            case LASTNAME -> strategy.checkValue(employeeQueryModel.getLastName().toLowerCase(), value);
+            case LASTNAME -> strategy.checkValue(employeeQueryModel.getLastname().toLowerCase(), value);
 
             case EMAIL -> strategy.checkValue(employeeQueryModel.getEmail().toLowerCase(), value);
 

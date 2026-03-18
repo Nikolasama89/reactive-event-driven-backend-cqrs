@@ -23,8 +23,8 @@ public class JSONEmployeeQueryModelPageSerializer implements Serializer<PageDTO<
             for (EmployeeQueryModel employee : pageDTO.getItems()) {
                 JSONObject empObject = new JSONObject();
                 empObject.put("id", employee.getId());
-                empObject.put("firstname", employee.getFirstName());
-                empObject.put("lastname", employee.getLastName());
+                empObject.put("firstname", employee.getFirstname());
+                empObject.put("lastname", employee.getLastname());
                 empObject.put("email", employee.getEmail());
                 empObject.put("companyId", employee.getCompanyId());
                 empObject.put("companyName", employee.getCompanyName());

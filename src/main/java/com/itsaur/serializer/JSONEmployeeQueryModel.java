@@ -12,8 +12,8 @@ public class JSONEmployeeQueryModel implements Serializer<EmployeeQueryModel> {
     public byte[] serialize(EmployeeQueryModel object) {
             JSONObject json = new JSONObject();
             json.put("id", object.getId());
-            json.put("firstname", object.getFirstName());
-            json.put("lastname", object.getLastName());
+            json.put("firstname", object.getFirstname());
+            json.put("lastname", object.getLastname());
             json.put("email", object.getEmail());
             json.put("company_id", object.getCompanyId());
             json.put("company_name", object.getCompanyName());
