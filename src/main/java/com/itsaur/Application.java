@@ -1,5 +1,6 @@
 package com.itsaur;
 
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import com.itsaur.dto.*;
 import com.itsaur.handler.CompanyHandler;
 import com.itsaur.handler.EmployeeHandler;
@@ -8,9 +9,12 @@ import com.itsaur.model.CompanyQueryModel;
 import com.itsaur.model.Employee;
 import com.itsaur.model.EmployeeQueryModel;
 import com.itsaur.repository.*;
+import com.itsaur.repository.search.ElasticSearchCompanyQueryBuilder;
+import com.itsaur.repository.search.ElasticSearchEmployeeQueryBuilder;
 import com.itsaur.serializer.*;
 import com.itsaur.service.*;
 import com.itsaur.util.DbConnector;
+import com.itsaur.util.ElasticSearchConfig;
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.netty.DisposableServer;
 import reactor.netty.http.server.HttpServer;
@@ -40,6 +44,18 @@ public class Application {
 
             System.out.println("Running IN-MEMORY");
 
+        } else if (storageType.equalsIgnoreCase("elastic")) {
+            ElasticsearchAsyncClient client = ElasticSearchConfig.getClient();
+
+            companyRepository = new ElasticCompanyRepository(client);
+            ElasticSearchCompanyQueryBuilder companyQueryBuilder = new ElasticSearchCompanyQueryBuilder();
+            companyQueryRepository = new ElasticCompanyQueryRepository(client, companyQueryBuilder);
+
+            employeeRepository = new ElasticEmployeeRepository(client, companyRepository);
+            ElasticSearchEmployeeQueryBuilder queryBuilder = new ElasticSearchEmployeeQueryBuilder();
+            employeeQueryRepository = new ElasticEmployeeQueryRepository(client, queryBuilder);
+
+            System.out.println("Running ELASTIC");
         } else {
 
             ConnectionFactory connectionFactory = DbConnector.getPool();
