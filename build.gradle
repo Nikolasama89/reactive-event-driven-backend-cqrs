@@ -31,6 +31,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1'
     // https://mvnrepository.com/artifact/org.json/json
     implementation 'org.json:json:20251224'
+    implementation 'co.elastic.clients:elasticsearch-java:8.12.0'
 }
 
 test {
