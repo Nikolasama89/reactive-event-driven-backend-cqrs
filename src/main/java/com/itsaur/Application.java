@@ -32,46 +32,68 @@ public class Application {
         CompanyRepository companyRepository;
         CompanyQueryRepository companyQueryRepository;
 
+        EmployeeService employeeService;
+        CompanyService companyService;
+        EmployeeQueryService employeeQueryService;
+        CompanyQueryService companyQueryService;
+
         if (storageType.equalsIgnoreCase("memory")) {
 
             InMemoryStorage storage = new InMemoryStorage();
             InMemoryEmployeeSearch employeeSearch = new InMemoryEmployeeSearch(storage);
             InMemoryCompanySearch companySearch = new InMemoryCompanySearch(storage);
+
             employeeRepository = new InMemoryEmployeeRepository(storage);
             employeeQueryRepository = new InMemoryEmployeeQueryRepository(storage, employeeSearch);
             companyRepository = new InMemoryCompanyRepository(storage);
             companyQueryRepository = new InMemoryCompanyQueryRepository(storage, companySearch);
 
+            employeeService = new EmployeeServiceImpl(employeeRepository, companyRepository);
+            companyService = new CompanyServiceImpl(companyRepository);
+            employeeQueryService = new EmployeeQueryServiceImpl(employeeQueryRepository);
+            companyQueryService = new CompanyQueryServiceImpl(companyQueryRepository);
+
             System.out.println("Running IN-MEMORY");
 
-        } else if (storageType.equalsIgnoreCase("elastic")) {
+        } else if (storageType.equalsIgnoreCase("elastic")){
+
             ElasticsearchAsyncClient client = ElasticSearchConfig.getClient();
+            ConnectionFactory connectionFactory = DbConnector.getPool();
 
-            companyRepository = new ElasticCompanyRepository(client);
+            employeeRepository = new DBEmployeeRepository(connectionFactory);
+            companyRepository = new DBCompanyRepository(connectionFactory);
+
             ElasticSearchCompanyQueryBuilder companyQueryBuilder = new ElasticSearchCompanyQueryBuilder();
+            ElasticSearchEmployeeQueryBuilder employeeQueryBuilder = new ElasticSearchEmployeeQueryBuilder();
+
+            employeeQueryRepository = new ElasticEmployeeQueryRepository(client, employeeQueryBuilder);
             companyQueryRepository = new ElasticCompanyQueryRepository(client, companyQueryBuilder);
+            ElasticEmployeeRepository elasticEmployeeRepository = new ElasticEmployeeRepository(client, companyRepository);
+            ElasticCompanyRepository elasticCompanyRepository = new ElasticCompanyRepository(client);
 
-            employeeRepository = new ElasticEmployeeRepository(client, companyRepository);
-            ElasticSearchEmployeeQueryBuilder queryBuilder = new ElasticSearchEmployeeQueryBuilder();
-            employeeQueryRepository = new ElasticEmployeeQueryRepository(client, queryBuilder);
+            employeeService = new ElasticEmployeeServiceImpl(employeeRepository, companyRepository, elasticEmployeeRepository);
+            companyService = new ElasticCompanyServiceImpl(companyRepository, elasticCompanyRepository);
+            employeeQueryService = new ElasticEmployeeQueryServiceImpl((ElasticEmployeeQueryRepository) employeeQueryRepository);
+            companyQueryService = new CompanyQueryServiceImpl(companyQueryRepository);
 
-            System.out.println("Running ELASTIC");
-        } else {
+            System.out.println("Running SQL with ELASTIC");
+        }
 
+        else {
             ConnectionFactory connectionFactory = DbConnector.getPool();
 
             employeeRepository = new DBEmployeeRepository(connectionFactory);
             employeeQueryRepository = new DBEmployeeQueryRepository(connectionFactory);
             companyRepository = new DBCompanyRepository(connectionFactory);
             companyQueryRepository = new DBCompanyQueryRepository(connectionFactory);
+
+            employeeService = new EmployeeServiceImpl(employeeRepository, companyRepository);
+            companyService = new CompanyServiceImpl(companyRepository);
+            employeeQueryService = new EmployeeQueryServiceImpl(employeeQueryRepository);
+            companyQueryService = new CompanyQueryServiceImpl(companyQueryRepository);
+
             System.out.println("Running with SQL storage");
         }
-
-        // Services
-        EmployeeService employeeService = new EmployeeServiceImpl(employeeRepository,  companyRepository);
-        CompanyService companyService = new CompanyServiceImpl(companyRepository);
-        EmployeeQueryService employeeQueryService = new EmployeeQueryServiceImpl(employeeQueryRepository);
-        CompanyQueryService companyQueryService = new CompanyQueryServiceImpl(companyQueryRepository);
 
         // Serializers/Deserializers
         Serializer<Employee> employeeSerializer = new JSONEmployeeSerializer();
