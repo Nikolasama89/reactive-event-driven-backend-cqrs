@@ -53,9 +53,14 @@ public class ElasticCompanyRepository implements CompanyRepository{
     @Override
     public Mono<Company> createOrUpdateCompany(Long id, Company company) {
 
+        OffsetDateTime now = OffsetDateTime.now();
+
         if (company.getId() == null) {
             company.setId(System.currentTimeMillis());
-            company.setCreatedAt(OffsetDateTime.now());
+        }
+
+        if (company.getCreatedAt() == null) {
+            company.setCreatedAt(now);
         }
         company.setUpdatedAt(OffsetDateTime.now());
 

@@ -56,12 +56,18 @@ public class ElasticEmployeeRepository implements EmployeeRepository{
     @Override
     public Mono<Employee> createOrUpdateEmployee(Long id, Employee employee) {
 
-        if (employee.getId() == null) {
+        OffsetDateTime now = OffsetDateTime.now();
+
+        if (id == null && employee.getId() == null) {
             employee.setId(System.currentTimeMillis());
-            employee.setCreatedAt(OffsetDateTime.now());
+            employee.setCreatedAt(now);
         }
 
-        employee.setUpdatedAt(OffsetDateTime.now());
+        if (employee.getCreatedAt() == null) {
+            employee.setCreatedAt(now);
+        }
+
+        employee.setUpdatedAt(now);
 
         Mono<EmployeeQueryModel> queryModel = companyRepository.getCompanyById(employee.getCompanyId())
                 .map(company -> new EmployeeQueryModel(
