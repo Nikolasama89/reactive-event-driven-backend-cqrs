@@ -2,6 +2,7 @@ package com.itsaur;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import com.itsaur.dto.*;
+import com.itsaur.event.*;
 import com.itsaur.handler.CompanyHandler;
 import com.itsaur.handler.EmployeeHandler;
 import com.itsaur.model.Company;
@@ -71,8 +72,23 @@ public class Application {
             ElasticEmployeeRepository elasticEmployeeRepository = new ElasticEmployeeRepository(client, companyRepository);
             ElasticCompanyRepository elasticCompanyRepository = new ElasticCompanyRepository(client);
 
+            DomainEventListener<?> companyCreatedloggingListener = new CompanyCreatedLoggingEventListener();
+            DomainEventListener<?> companyUpdatedLoggingListener = new CompanyUpdatedLoggingEventListener();
+
+            DomainEventListener<?> companyCreatedElasticEventListener = new CompanyCreatedElasticEventListener(companyRepository, elasticCompanyRepository);
+            DomainEventListener<?> companyUpdatedElasticEventListener = new CompanyUpdatedElasticEventListener(companyRepository, elasticCompanyRepository);
+
+            List<DomainEventListener<?>> listeners = List.of(
+                    companyCreatedloggingListener,
+                    companyCreatedElasticEventListener,
+                    companyUpdatedLoggingListener,
+                    companyUpdatedElasticEventListener
+            );
+
+            EventPublisher publisher = new EventPublisher(listeners);
+
             employeeService = new ElasticEmployeeServiceImpl(employeeRepository, companyRepository, elasticEmployeeRepository);
-            companyService = new ElasticCompanyServiceImpl(companyRepository, elasticCompanyRepository);
+            companyService = new ElasticCompanyServiceImpl(companyRepository, elasticCompanyRepository, publisher);
             employeeQueryService = new ElasticEmployeeQueryServiceImpl((ElasticEmployeeQueryRepository) employeeQueryRepository);
             companyQueryService = new CompanyQueryServiceImpl(companyQueryRepository);
 

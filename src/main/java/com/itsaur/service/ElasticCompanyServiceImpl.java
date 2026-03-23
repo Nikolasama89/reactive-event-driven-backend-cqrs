@@ -2,6 +2,9 @@ package com.itsaur.service;
 
 import com.itsaur.dto.CompanyCreateDTO;
 import com.itsaur.dto.CompanyUpdateDTO;
+import com.itsaur.event.CompanyCreatedEvent;
+import com.itsaur.event.CompanyUpdatedEvent;
+import com.itsaur.event.EventPublisher;
 import com.itsaur.exceptions.*;
 import com.itsaur.mapper.CompanyMapper;
 import com.itsaur.model.Company;
@@ -13,10 +16,12 @@ public class ElasticCompanyServiceImpl implements CompanyService{
     private final CompanyRepository companyRepository;
     private final ElasticCompanyRepository elasticCompanyRepository;
     private final CompanyMapper companyMapper = new CompanyMapper();
+    private final EventPublisher eventPublisher;
 
-    public ElasticCompanyServiceImpl(CompanyRepository companyRepository, ElasticCompanyRepository elasticCompanyRepository) {
+    public ElasticCompanyServiceImpl(CompanyRepository companyRepository, ElasticCompanyRepository elasticCompanyRepository, EventPublisher eventPublisher) {
         this.companyRepository = companyRepository;
         this.elasticCompanyRepository = elasticCompanyRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -51,9 +56,10 @@ public class ElasticCompanyServiceImpl implements CompanyService{
                     if (exists) {
                         return Mono.error(new CompanyVatAlreadyExistsException("VAT already exists."));
                     }
-                    return companyRepository.createOrUpdateCompany(null, company).flatMap(savedCompany ->
-                            elasticCompanyRepository.createOrUpdateCompany(savedCompany.getId(), savedCompany).thenReturn(savedCompany)
-                    );
+                    return companyRepository.createOrUpdateCompany(null, company)
+                            .flatMap(createdCompany -> eventPublisher
+                                    .publish(new CompanyCreatedEvent(createdCompany.getId()))
+                                    .thenReturn(createdCompany));
                 });
 
     }
@@ -77,7 +83,9 @@ public class ElasticCompanyServiceImpl implements CompanyService{
                     existing.setVat(companyUpdateDTO.getVat());
                     existing.setAddress(companyUpdateDTO.getAddress());
                     return companyRepository.createOrUpdateCompany(id, existing).flatMap(updatedCompany ->
-                            elasticCompanyRepository.createOrUpdateCompany(updatedCompany.getId(), updatedCompany));
+                                    elasticCompanyRepository.createOrUpdateCompany(updatedCompany.getId(), updatedCompany))
+                            .flatMap(updatedCompany -> eventPublisher
+                                    .publish(new CompanyUpdatedEvent(updatedCompany.getId())));
                 })
                 .then();
     }
