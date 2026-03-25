@@ -13,7 +13,7 @@ public class EventPublisher {
         this.listeners = listeners;
     }
 
-    public Mono<Void> publish(Object event) {
+    public Mono<Void> publish(DomainEvent event) {
         return Flux.fromIterable(listeners)
                 .filter(listener -> listener.eventType().isInstance(event))
                 .flatMap(listener -> invoke(listener, event))
@@ -21,7 +21,7 @@ public class EventPublisher {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Mono<Void> invoke(DomainEventListener<?> listener, Object event) {
+    private <T> Mono<Void> invoke(DomainEventListener<?> listener, DomainEvent event) {
         DomainEventListener<T> l = (DomainEventListener<T>) listener;
         return l.handle((T) event);
     }
