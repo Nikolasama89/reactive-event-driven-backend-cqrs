@@ -3,6 +3,7 @@ package com.itsaur.service;
 import com.itsaur.dto.CompanyCreateDTO;
 import com.itsaur.dto.CompanyUpdateDTO;
 import com.itsaur.event.CompanyCreatedEvent;
+import com.itsaur.event.CompanyDeletedEvent;
 import com.itsaur.event.CompanyUpdatedEvent;
 import com.itsaur.event.EventPublisher;
 import com.itsaur.exceptions.*;
@@ -97,7 +98,9 @@ public class ElasticCompanyServiceImpl implements CompanyService{
         }
         return companyRepository.getCompanyById(id)
                 .switchIfEmpty(Mono.error(new CompanyNotFoundException("Company with id: " + id + " not found")))
-                .flatMap(company -> companyRepository.deleteCompany(id))
-                .then(elasticCompanyRepository.deleteCompany(id));
+                .flatMap(company ->
+                        companyRepository.deleteCompany(id)
+                                .then(eventPublisher.publish(new CompanyDeletedEvent(company.getId())))
+                );
     }
 }

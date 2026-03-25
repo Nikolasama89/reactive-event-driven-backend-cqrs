@@ -72,22 +72,43 @@ public class Application {
             ElasticEmployeeRepository elasticEmployeeRepository = new ElasticEmployeeRepository(client, companyRepository);
             ElasticCompanyRepository elasticCompanyRepository = new ElasticCompanyRepository(client);
 
-            DomainEventListener<?> companyCreatedloggingListener = new CompanyCreatedLoggingEventListener();
+            DomainEventListener<?> companyCreatedLoggingEventListener = new CompanyCreatedLoggingEventListener();
             DomainEventListener<?> companyUpdatedLoggingListener = new CompanyUpdatedLoggingEventListener();
-
-            DomainEventListener<?> companyCreatedElasticEventListener = new CompanyCreatedElasticEventListener(companyRepository, elasticCompanyRepository);
-            DomainEventListener<?> companyUpdatedElasticEventListener = new CompanyUpdatedElasticEventListener(companyRepository, elasticCompanyRepository);
+            DomainEventListener<?> companyCreatedElasticEventListener =
+                    new CompanyCreatedElasticEventListener(companyRepository, elasticCompanyRepository);
+            DomainEventListener<?> companyUpdatedElasticEventListener =
+                    new CompanyUpdatedElasticEventListener(companyRepository, elasticCompanyRepository);
+            DomainEventListener<?> companyDeletedLoggingEventListener = new CompanyDeletedLoggingEventListener();
+            DomainEventListener<?> companyDeletedElasticEventListener = new CompanyDeletedElasticEventListener(elasticCompanyRepository);
+            DomainEventListener<?> employeeCreatedLoggingEventListener = new EmployeeCreatedLoggingEventListener();
+            DomainEventListener<?> employeeCreatedElasticEventListener = new EmployeeCreatedElasticEventListener(employeeRepository, elasticEmployeeRepository);
+            DomainEventListener<?> employeeUpdatedLoggingEventListener = new EmployeeUpdatedLoggingEventListener();
+            DomainEventListener<?> employeeUpdatedElasticEventListener = new EmployeeUpdatedElasticEventListener(employeeRepository, elasticEmployeeRepository);
+            DomainEventListener<?> employeeDeletedLoggingEventListener = new EmployeeDeletedLoggingEventListener();
+            DomainEventListener<?> employeeDeletedElasticEventListener = new EmployeeDeletedElasticEventListener(elasticEmployeeRepository);
+            DomainEventListener<?> employeeIncrementCompanyTotalEmployeesListener = new EmployeeCreateIncrementTotalEmployeesListener(client);
+            DomainEventListener<?> employeeDecrementCompanyTotalEmployeesListener = new EmployeeDeletedDecrementTotalEmployeesListener(client);
 
             List<DomainEventListener<?>> listeners = List.of(
-                    companyCreatedloggingListener,
+                    companyCreatedLoggingEventListener,
                     companyCreatedElasticEventListener,
                     companyUpdatedLoggingListener,
-                    companyUpdatedElasticEventListener
+                    companyUpdatedElasticEventListener,
+                    companyDeletedLoggingEventListener,
+                    companyDeletedElasticEventListener,
+                    employeeCreatedLoggingEventListener,
+                    employeeCreatedElasticEventListener,
+                    employeeUpdatedLoggingEventListener,
+                    employeeUpdatedElasticEventListener,
+                    employeeDeletedLoggingEventListener,
+                    employeeDeletedElasticEventListener,
+                    employeeIncrementCompanyTotalEmployeesListener,
+                    employeeDecrementCompanyTotalEmployeesListener
             );
 
             EventPublisher publisher = new EventPublisher(listeners);
 
-            employeeService = new ElasticEmployeeServiceImpl(employeeRepository, companyRepository, elasticEmployeeRepository);
+            employeeService = new ElasticEmployeeServiceImpl(employeeRepository, companyRepository, elasticEmployeeRepository, publisher);
             companyService = new ElasticCompanyServiceImpl(companyRepository, elasticCompanyRepository, publisher);
             employeeQueryService = new ElasticEmployeeQueryServiceImpl((ElasticEmployeeQueryRepository) employeeQueryRepository);
             companyQueryService = new CompanyQueryServiceImpl(companyQueryRepository);

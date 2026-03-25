@@ -2,6 +2,10 @@ package com.itsaur.service;
 
 import com.itsaur.dto.EmployeeCreateDTO;
 import com.itsaur.dto.EmployeeUpdateDTO;
+import com.itsaur.event.EmployeeCreatedEvent;
+import com.itsaur.event.EmployeeDeletedEvent;
+import com.itsaur.event.EmployeeUpdatedEvent;
+import com.itsaur.event.EventPublisher;
 import com.itsaur.exceptions.*;
 import com.itsaur.mapper.EmployeeMapper;
 import com.itsaur.model.Employee;
@@ -19,11 +23,18 @@ public class ElasticEmployeeServiceImpl implements EmployeeService{
     private final CompanyRepository companyRepository;
     private final ElasticEmployeeRepository elasticEmployeeRepository;
     private final EmployeeMapper employeeMapper =  new EmployeeMapper();
+    private final EventPublisher eventPublisher;
 
-    public ElasticEmployeeServiceImpl(EmployeeRepository employeeRepository, CompanyRepository companyRepository, ElasticEmployeeRepository elasticEmployeeRepository) {
+    public ElasticEmployeeServiceImpl(
+            EmployeeRepository employeeRepository,
+            CompanyRepository companyRepository,
+            ElasticEmployeeRepository elasticEmployeeRepository,
+            EventPublisher eventPublisher
+    ) {
         this.employeeRepository = employeeRepository;
         this.companyRepository = companyRepository;
         this.elasticEmployeeRepository = elasticEmployeeRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -63,8 +74,7 @@ public class ElasticEmployeeServiceImpl implements EmployeeService{
                         Employee employee = employeeMapper.toEntity(employeeCreateDTO);
                         // Αν βρεθει η εταρεια με το id που δωσαμε τοτε θα προχωρησει στο save
                         return employeeRepository.createOrUpdateEmployee(null, employee).flatMap(
-                                savedEmployee -> elasticEmployeeRepository
-                                        .createOrUpdateEmployee(savedEmployee.getId(), savedEmployee)
+                                savedEmployee -> eventPublisher.publish(new EmployeeCreatedEvent(savedEmployee.getId(), savedEmployee.getCompanyId()))
                                         .thenReturn(savedEmployee)
                         );
                     });
@@ -92,7 +102,8 @@ public class ElasticEmployeeServiceImpl implements EmployeeService{
                     employee.setFirstname(employeeUpdateDTO.getFirstname());
                     employee.setLastname(employeeUpdateDTO.getLastname());
                     return employeeRepository.createOrUpdateEmployee(id, employee).flatMap(
-                            updatedEmployee -> elasticEmployeeRepository.createOrUpdateEmployee(updatedEmployee.getId(), updatedEmployee));
+                            updatedEmployee -> eventPublisher
+                                    .publish(new EmployeeUpdatedEvent(updatedEmployee.getId())));
                 })
                 .then();
     }
@@ -104,7 +115,8 @@ public class ElasticEmployeeServiceImpl implements EmployeeService{
         }
         return employeeRepository.getEmployeeById(id)
                 .switchIfEmpty(Mono.error(new EmployeeNotFoundException("Employee with id: " + id + " not found.")))
-                .flatMap(employee -> employeeRepository.deleteEmployee(id))
-                .then(elasticEmployeeRepository.deleteEmployee(id));
+                .flatMap(employee -> employeeRepository.deleteEmployee(id)
+                        .then(eventPublisher.publish(new EmployeeDeletedEvent(employee.getId(), employee.getCompanyId())))
+                );
     }
 }
