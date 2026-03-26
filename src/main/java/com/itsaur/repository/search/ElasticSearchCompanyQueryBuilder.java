@@ -5,7 +5,7 @@ import com.itsaur.dto.ComplexSearchRequestDTO;
 import com.itsaur.dto.SearchComponent;
 import com.itsaur.dto.SimpleSearchRequestDTO;
 import com.itsaur.dto.enums.CompanySearchFieldCondition;
-import com.itsaur.dto.enums.FieldCondition;
+import com.itsaur.dto.enums.SearchFieldCondition;
 
 import java.util.List;
 
@@ -76,7 +76,7 @@ public class ElasticSearchCompanyQueryBuilder {
 
     }
 
-    private CompanySearchFieldCondition mapToCompanyField(FieldCondition field) {
+    private CompanySearchFieldCondition mapToCompanyField(SearchFieldCondition field) {
         return switch (field) {
             case COMPANY_NAME -> CompanySearchFieldCondition.COMPANY_NAME;
             case FIRSTNAME -> CompanySearchFieldCondition.FIRSTNAME;

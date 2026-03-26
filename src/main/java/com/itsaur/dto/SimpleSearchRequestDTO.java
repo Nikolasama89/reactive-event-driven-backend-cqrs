@@ -1,21 +1,17 @@
 package com.itsaur.dto;
 
-import com.itsaur.dto.enums.FieldCondition;
+import com.itsaur.dto.enums.SearchFieldCondition;
 import com.itsaur.dto.enums.TypeCondition;
-import com.itsaur.repository.search.DBConditionStrategy;
-import com.itsaur.repository.search.DBConditionStrategyFactory;
-
-import java.util.List;
 
 public class SimpleSearchRequestDTO implements SearchComponent {
     private TypeCondition type;
-    private FieldCondition field;
+    private SearchFieldCondition field;
     private String value;
 
     public SimpleSearchRequestDTO() {
     }
 
-    public SimpleSearchRequestDTO(TypeCondition type, FieldCondition field, String value) {
+    public SimpleSearchRequestDTO(TypeCondition type, SearchFieldCondition field, String value) {
         this.type = type;
         this.field = field;
         this.value = value;
@@ -29,11 +25,11 @@ public class SimpleSearchRequestDTO implements SearchComponent {
         this.type = type;
     }
 
-    public FieldCondition getField() {
+    public SearchFieldCondition getField() {
         return field;
     }
 
-    public void setField(FieldCondition field) {
+    public void setField(SearchFieldCondition field) {
         this.field = field;
     }
 

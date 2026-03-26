@@ -1,6 +1,6 @@
 package com.itsaur.dto.enums;
 
-public enum FieldCondition {
+public enum SearchFieldCondition {
     FIRSTNAME("firstname"),
     LASTNAME("lastname"),
     EMAIL("email"),
@@ -9,7 +9,7 @@ public enum FieldCondition {
 
     private final String column;
 
-    private FieldCondition(String column) {
+    private SearchFieldCondition(String column) {
         this.column = column;
     }
 

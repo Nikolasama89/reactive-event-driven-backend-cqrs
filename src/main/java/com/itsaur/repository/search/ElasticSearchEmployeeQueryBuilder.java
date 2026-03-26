@@ -4,7 +4,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.itsaur.dto.ComplexSearchRequestDTO;
 import com.itsaur.dto.SearchComponent;
 import com.itsaur.dto.SimpleSearchRequestDTO;
-import com.itsaur.dto.enums.FieldCondition;
+import com.itsaur.dto.enums.SearchFieldCondition;
 
 import java.util.List;
 
@@ -75,8 +75,8 @@ public class ElasticSearchEmployeeQueryBuilder {
 
     }
 
-    private String resolveField(FieldCondition fieldCondition) {
-        return switch (fieldCondition) {
+    private String resolveField(SearchFieldCondition searchFieldCondition) {
+        return switch (searchFieldCondition) {
             case FIRSTNAME -> "firstname";
             case LASTNAME -> "lastname";
             case EMAIL -> "email";

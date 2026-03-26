@@ -4,7 +4,7 @@ import com.itsaur.dto.ComplexSearchRequestDTO;
 import com.itsaur.dto.PageDTO;
 import com.itsaur.dto.SearchComponent;
 import com.itsaur.dto.SimpleSearchRequestDTO;
-import com.itsaur.dto.enums.FieldCondition;
+import com.itsaur.dto.enums.SearchFieldCondition;
 import com.itsaur.exceptions.*;
 import com.itsaur.model.CompanyQueryModel;
 import com.itsaur.repository.ElasticCompanyQueryRepository;
@@ -60,13 +60,13 @@ public class ElasticCompanyQueryServiceImpl implements CompanyQueryService{
 
         if (searchComponent instanceof SimpleSearchRequestDTO simpleSearchRequestDTO){
             String value = simpleSearchRequestDTO.getValue();
-            FieldCondition field = simpleSearchRequestDTO.getField();
+            SearchFieldCondition field = simpleSearchRequestDTO.getField();
 
             if (value == null || value.trim().isEmpty()) {
                 return Mono.error(new SearchValueEmptyException("Search value can not be empty"));
             }
 
-            if (field == FieldCondition.EMAIL){
+            if (field == SearchFieldCondition.EMAIL){
                 return Mono.error(new FieldCompanySearchInvalid("Email is not a valid search field for companies"));
             }
 
@@ -81,9 +81,9 @@ public class ElasticCompanyQueryServiceImpl implements CompanyQueryService{
             for (SearchComponent child: complexRequestDto.getConditions()){
                 if (child instanceof SimpleSearchRequestDTO simpleChild){
                     String value = simpleChild.getValue();
-                    FieldCondition field = simpleChild.getField();
+                    SearchFieldCondition field = simpleChild.getField();
 
-                    if (field == FieldCondition.EMAIL){
+                    if (field == SearchFieldCondition.EMAIL){
                         return Mono.error(new FieldCompanySearchInvalid("Email is not a valid search field for companies"));
                     }
 

@@ -3,7 +3,7 @@ package com.itsaur.repository;
 import com.itsaur.dto.ComplexSearchRequestDTO;
 import com.itsaur.dto.SearchComponent;
 import com.itsaur.dto.SimpleSearchRequestDTO;
-import com.itsaur.dto.enums.EmployeeSearchFieldCondition;
+import com.itsaur.dto.enums.SearchFieldCondition;
 import com.itsaur.dto.enums.LogicOperator;
 import com.itsaur.model.EmployeeQueryModel;
 import com.itsaur.repository.search.InMemoryConditionStrategy;
@@ -58,7 +58,7 @@ public class InMemoryEmployeeSearch implements SearchHandler<Predicate<EmployeeQ
 
         String value = dto.getValue().toLowerCase();
         InMemoryConditionStrategy strategy = InMemoryConditionStrategyFactory.getStrategy(dto.getType());
-        EmployeeSearchFieldCondition employeeField = EmployeeSearchFieldCondition.valueOf(dto.getField().name());
+        SearchFieldCondition employeeField = SearchFieldCondition.valueOf(dto.getField().name());
 
         return employeeQueryModel -> switch (employeeField){
 
