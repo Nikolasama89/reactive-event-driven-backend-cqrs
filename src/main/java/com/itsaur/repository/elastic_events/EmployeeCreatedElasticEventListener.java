@@ -1,10 +1,12 @@
-package com.itsaur.event;
+package com.itsaur.repository.elastic_events;
 
+import com.itsaur.event.DomainEventListener;
+import com.itsaur.event.EmployeeCreatedEvent;
 import com.itsaur.repository.ElasticEmployeeRepository;
 import com.itsaur.repository.EmployeeRepository;
 import reactor.core.publisher.Mono;
 
-public class EmployeeCreatedElasticEventListener implements DomainEventListener<EmployeeCreatedEvent>{
+public class EmployeeCreatedElasticEventListener implements DomainEventListener<EmployeeCreatedEvent> {
 
     private final EmployeeRepository employeeRepository;
     private final ElasticEmployeeRepository elasticEmployeeRepository;

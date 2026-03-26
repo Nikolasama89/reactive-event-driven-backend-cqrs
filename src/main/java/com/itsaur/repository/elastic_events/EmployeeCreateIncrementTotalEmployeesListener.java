@@ -1,9 +1,11 @@
-package com.itsaur.event;
+package com.itsaur.repository.elastic_events;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
+import com.itsaur.event.DomainEventListener;
+import com.itsaur.event.EmployeeCreatedEvent;
 import reactor.core.publisher.Mono;
 
-public class EmployeeCreateIncrementTotalEmployeesListener implements DomainEventListener<EmployeeCreatedEvent>{
+public class EmployeeCreateIncrementTotalEmployeesListener implements DomainEventListener<EmployeeCreatedEvent> {
 
     private final ElasticsearchAsyncClient client;
 

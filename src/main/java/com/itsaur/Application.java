@@ -10,6 +10,7 @@ import com.itsaur.model.CompanyQueryModel;
 import com.itsaur.model.Employee;
 import com.itsaur.model.EmployeeQueryModel;
 import com.itsaur.repository.*;
+import com.itsaur.repository.elastic_events.*;
 import com.itsaur.repository.search.ElasticSearchCompanyQueryBuilder;
 import com.itsaur.repository.search.ElasticSearchEmployeeQueryBuilder;
 import com.itsaur.serializer.*;

@@ -1,9 +1,11 @@
-package com.itsaur.event;
+package com.itsaur.repository.elastic_events;
 
+import com.itsaur.event.DomainEventListener;
+import com.itsaur.event.EmployeeDeletedEvent;
 import com.itsaur.repository.ElasticEmployeeRepository;
 import reactor.core.publisher.Mono;
 
-public class EmployeeDeletedElasticEventListener implements DomainEventListener<EmployeeDeletedEvent>{
+public class EmployeeDeletedElasticEventListener implements DomainEventListener<EmployeeDeletedEvent> {
 
     private final ElasticEmployeeRepository elasticEmployeeRepository;
 

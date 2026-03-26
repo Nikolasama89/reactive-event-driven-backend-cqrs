@@ -1,10 +1,12 @@
-package com.itsaur.event;
+package com.itsaur.repository.elastic_events;
 
+import com.itsaur.event.CompanyCreatedEvent;
+import com.itsaur.event.DomainEventListener;
 import com.itsaur.repository.CompanyRepository;
 import com.itsaur.repository.ElasticCompanyRepository;
 import reactor.core.publisher.Mono;
 
-public class CompanyCreatedElasticEventListener implements DomainEventListener<CompanyCreatedEvent>{
+public class CompanyCreatedElasticEventListener implements DomainEventListener<CompanyCreatedEvent> {
 
     private final CompanyRepository companyRepository;
     private final ElasticCompanyRepository elasticRepository;

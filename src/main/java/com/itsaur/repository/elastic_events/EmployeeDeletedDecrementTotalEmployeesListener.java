@@ -1,9 +1,11 @@
-package com.itsaur.event;
+package com.itsaur.repository.elastic_events;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
+import com.itsaur.event.DomainEventListener;
+import com.itsaur.event.EmployeeDeletedEvent;
 import reactor.core.publisher.Mono;
 
-public class EmployeeDeletedDecrementTotalEmployeesListener implements DomainEventListener<EmployeeDeletedEvent>{
+public class EmployeeDeletedDecrementTotalEmployeesListener implements DomainEventListener<EmployeeDeletedEvent> {
 
     private final ElasticsearchAsyncClient client;
 

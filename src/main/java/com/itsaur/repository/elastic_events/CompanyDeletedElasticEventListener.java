@@ -1,9 +1,11 @@
-package com.itsaur.event;
+package com.itsaur.repository.elastic_events;
 
+import com.itsaur.event.CompanyDeletedEvent;
+import com.itsaur.event.DomainEventListener;
 import com.itsaur.repository.ElasticCompanyRepository;
 import reactor.core.publisher.Mono;
 
-public class CompanyDeletedElasticEventListener implements DomainEventListener<CompanyDeletedEvent>{
+public class CompanyDeletedElasticEventListener implements DomainEventListener<CompanyDeletedEvent> {
 
     private final ElasticCompanyRepository elasticRepository;
 
