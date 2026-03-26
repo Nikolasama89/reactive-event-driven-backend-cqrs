@@ -34,10 +34,14 @@ public class Application {
         CompanyRepository companyRepository;
         CompanyQueryRepository companyQueryRepository;
 
+
+
         EmployeeService employeeService;
         CompanyService companyService;
         EmployeeQueryService employeeQueryService;
         CompanyQueryService companyQueryService;
+
+        EventPublisher eventPublisher = null;
 
         if (storageType.equalsIgnoreCase("memory")) {
 
@@ -50,8 +54,8 @@ public class Application {
             companyRepository = new InMemoryCompanyRepository(storage);
             companyQueryRepository = new InMemoryCompanyQueryRepository(storage, companySearch);
 
-            employeeService = new EmployeeServiceImpl(employeeRepository, companyRepository);
-            companyService = new CompanyServiceImpl(companyRepository);
+            employeeService = new EmployeeServiceImpl(employeeRepository, companyRepository, eventPublisher);
+            companyService = new CompanyServiceImpl(companyRepository, eventPublisher);
             employeeQueryService = new EmployeeQueryServiceImpl(employeeQueryRepository);
             companyQueryService = new CompanyQueryServiceImpl(companyQueryRepository);
 
@@ -68,25 +72,26 @@ public class Application {
             ElasticSearchCompanyQueryBuilder companyQueryBuilder = new ElasticSearchCompanyQueryBuilder();
             ElasticSearchEmployeeQueryBuilder employeeQueryBuilder = new ElasticSearchEmployeeQueryBuilder();
 
-            employeeQueryRepository = new ElasticEmployeeQueryRepository(client, employeeQueryBuilder);
-            companyQueryRepository = new ElasticCompanyQueryRepository(client, companyQueryBuilder);
-            ElasticEmployeeRepository elasticEmployeeRepository = new ElasticEmployeeRepository(client, companyRepository);
-            ElasticCompanyRepository elasticCompanyRepository = new ElasticCompanyRepository(client);
+            ElasticEmployeeQueryRepository elasticEmployeeQueryRepository =
+                    new ElasticEmployeeQueryRepository(client, employeeQueryBuilder);
+            ElasticCompanyQueryRepository elasticCompanyQueryRepository =
+                    new ElasticCompanyQueryRepository(client, companyQueryBuilder);
 
             DomainEventListener<?> companyCreatedLoggingEventListener = new CompanyCreatedLoggingEventListener();
             DomainEventListener<?> companyUpdatedLoggingListener = new CompanyUpdatedLoggingEventListener();
             DomainEventListener<?> companyCreatedElasticEventListener =
-                    new CompanyCreatedElasticEventListener(companyRepository, elasticCompanyRepository);
+                    new CompanyCreatedElasticEventListener(companyRepository, client);
             DomainEventListener<?> companyUpdatedElasticEventListener =
-                    new CompanyUpdatedElasticEventListener(companyRepository, elasticCompanyRepository);
+                    new CompanyUpdatedElasticEventListener(companyRepository, client);
             DomainEventListener<?> companyDeletedLoggingEventListener = new CompanyDeletedLoggingEventListener();
-            DomainEventListener<?> companyDeletedElasticEventListener = new CompanyDeletedElasticEventListener(elasticCompanyRepository);
+            DomainEventListener<?> companyDeletedElasticEventListener =
+                    new CompanyDeletedElasticEventListener(companyRepository, client);
             DomainEventListener<?> employeeCreatedLoggingEventListener = new EmployeeCreatedLoggingEventListener();
-            DomainEventListener<?> employeeCreatedElasticEventListener = new EmployeeCreatedElasticEventListener(employeeRepository, elasticEmployeeRepository);
+            DomainEventListener<?> employeeCreatedElasticEventListener = new EmployeeCreatedElasticEventListener(employeeRepository, client, companyRepository);
             DomainEventListener<?> employeeUpdatedLoggingEventListener = new EmployeeUpdatedLoggingEventListener();
-            DomainEventListener<?> employeeUpdatedElasticEventListener = new EmployeeUpdatedElasticEventListener(employeeRepository, elasticEmployeeRepository);
+            DomainEventListener<?> employeeUpdatedElasticEventListener = new EmployeeUpdatedElasticEventListener(employeeRepository, companyRepository, client);
             DomainEventListener<?> employeeDeletedLoggingEventListener = new EmployeeDeletedLoggingEventListener();
-            DomainEventListener<?> employeeDeletedElasticEventListener = new EmployeeDeletedElasticEventListener(elasticEmployeeRepository);
+            DomainEventListener<?> employeeDeletedElasticEventListener = new EmployeeDeletedElasticEventListener(employeeRepository, client);
             DomainEventListener<?> employeeIncrementCompanyTotalEmployeesListener = new EmployeeCreateIncrementTotalEmployeesListener(client);
             DomainEventListener<?> employeeDecrementCompanyTotalEmployeesListener = new EmployeeDeletedDecrementTotalEmployeesListener(client);
 
@@ -109,10 +114,10 @@ public class Application {
 
             EventPublisher publisher = new EventPublisher(listeners);
 
-            employeeService = new ElasticEmployeeServiceImpl(employeeRepository, companyRepository, elasticEmployeeRepository, publisher);
-            companyService = new ElasticCompanyServiceImpl(companyRepository, elasticCompanyRepository, publisher);
-            employeeQueryService = new ElasticEmployeeQueryServiceImpl((ElasticEmployeeQueryRepository) employeeQueryRepository);
-            companyQueryService = new CompanyQueryServiceImpl(companyQueryRepository);
+            employeeService = new EmployeeServiceImpl(employeeRepository, companyRepository, publisher);
+            companyService = new CompanyServiceImpl(companyRepository, publisher);
+            employeeQueryService = new ElasticEmployeeQueryServiceImpl(elasticEmployeeQueryRepository);
+            companyQueryService = new ElasticCompanyQueryServiceImpl(elasticCompanyQueryRepository);
 
             System.out.println("Running SQL with ELASTIC");
         }
@@ -125,8 +130,8 @@ public class Application {
             companyRepository = new DBCompanyRepository(connectionFactory);
             companyQueryRepository = new DBCompanyQueryRepository(connectionFactory);
 
-            employeeService = new EmployeeServiceImpl(employeeRepository, companyRepository);
-            companyService = new CompanyServiceImpl(companyRepository);
+            employeeService = new EmployeeServiceImpl(employeeRepository, companyRepository, eventPublisher);
+            companyService = new CompanyServiceImpl(companyRepository, eventPublisher);
             employeeQueryService = new EmployeeQueryServiceImpl(employeeQueryRepository);
             companyQueryService = new CompanyQueryServiceImpl(companyQueryRepository);
 

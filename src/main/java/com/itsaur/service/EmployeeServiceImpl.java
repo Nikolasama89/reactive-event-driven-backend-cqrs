@@ -2,6 +2,10 @@ package com.itsaur.service;
 
 import com.itsaur.dto.EmployeeCreateDTO;
 import com.itsaur.dto.EmployeeUpdateDTO;
+import com.itsaur.event.EmployeeCreatedEvent;
+import com.itsaur.event.EmployeeDeletedEvent;
+import com.itsaur.event.EmployeeUpdatedEvent;
+import com.itsaur.event.EventPublisher;
 import com.itsaur.exceptions.*;
 import com.itsaur.mapper.EmployeeMapper;
 import com.itsaur.model.Employee;
@@ -18,10 +22,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final CompanyRepository companyRepository;
     private final EmployeeMapper employeeMapper =  new EmployeeMapper();
-    
-    public EmployeeServiceImpl(EmployeeRepository employeeRepository,  CompanyRepository companyRepository) {
+    private final EventPublisher eventPublisher;
+
+    public EmployeeServiceImpl(EmployeeRepository employeeRepository,  CompanyRepository companyRepository, EventPublisher eventPublisher) {
         this.employeeRepository = employeeRepository;
         this.companyRepository = companyRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -52,17 +58,20 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         return employeeRepository.existsEmail(employeeCreateDTO.getEmail()).flatMap(exists -> {
-                    if (exists) {
-                        return Mono.error(new EmailAlreadyExistsException("Email already exists"));
-                    }
-                    return companyRepository.getCompanyById(companyId)
-                            .switchIfEmpty(Mono.error(new CompanyNotFoundException("Company with id: " + companyId + " not found")))
-                            .flatMap(company -> {
-                                Employee employee = employeeMapper.toEntity(employeeCreateDTO);
-                                // Αν βρεθει η εταρεια με το id που δωσαμε τοτε θα προχωρησει στο save
-                                return employeeRepository.createOrUpdateEmployee(null, employee);
-                            });
-                });
+            if (exists) {
+                return Mono.error(new EmailAlreadyExistsException("Email already exists"));
+            }
+            return companyRepository.getCompanyById(companyId)
+                    .switchIfEmpty(Mono.error(new CompanyNotFoundException("Company with id: " + companyId + " not found")))
+                    .flatMap(company -> {
+                        Employee employee = employeeMapper.toEntity(employeeCreateDTO);
+                        // Αν βρεθει η εταρεια με το id που δωσαμε τοτε θα προχωρησει στο save
+                        return employeeRepository.createOrUpdateEmployee(null, employee)
+                                .flatMap(employeeCreated -> eventPublisher
+                                        .publish(new EmployeeCreatedEvent(employeeCreated.getId(), employeeCreated.getCompanyId()))
+                                        .thenReturn(employeeCreated));
+                    });
+        });
     }
 
     @Override
@@ -85,7 +94,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .flatMap(employee -> {
                     employee.setFirstname(employeeUpdateDTO.getFirstname());
                     employee.setLastname(employeeUpdateDTO.getLastname());
-                    return employeeRepository.createOrUpdateEmployee(id, employee);
+                    return employeeRepository.createOrUpdateEmployee(id, employee)
+                            .flatMap(updatedEmployee -> eventPublisher.publish(new EmployeeUpdatedEvent(updatedEmployee.getId())));
                 })
                 .then();
     }
@@ -97,6 +107,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         return employeeRepository.getEmployeeById(id)
                 .switchIfEmpty(Mono.error(new EmployeeNotFoundException("Employee with id: " + id + " not found.")))
-                .flatMap(employee -> employeeRepository.deleteEmployee(id));
+                .flatMap(employee -> employeeRepository.deleteEmployee(id)
+                        .then(eventPublisher.publish(new EmployeeDeletedEvent(employee.getId(), employee.getCompanyId()))));
     }
 }

@@ -2,22 +2,26 @@ package com.itsaur.service;
 
 import com.itsaur.dto.CompanyCreateDTO;
 import com.itsaur.dto.CompanyUpdateDTO;
-import com.itsaur.dto.PageDTO;
+import com.itsaur.event.CompanyCreatedEvent;
+import com.itsaur.event.CompanyDeletedEvent;
+import com.itsaur.event.CompanyUpdatedEvent;
+import com.itsaur.event.EventPublisher;
 import com.itsaur.exceptions.*;
 import com.itsaur.mapper.CompanyMapper;
 import com.itsaur.model.Company;
-import com.itsaur.model.CompanyQueryModel;
 import com.itsaur.repository.CompanyRepository;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public class CompanyServiceImpl implements CompanyService {
 
     private final CompanyRepository companyRepository;
     private final CompanyMapper companyMapper = new CompanyMapper();
+    private final EventPublisher eventPublisher;
 
-    public CompanyServiceImpl(CompanyRepository companyRepository) {
+    public CompanyServiceImpl(CompanyRepository companyRepository, EventPublisher eventPublisher) {
         this.companyRepository = companyRepository;
+        this.eventPublisher = eventPublisher;
+
     }
 
     @Override
@@ -52,7 +56,10 @@ public class CompanyServiceImpl implements CompanyService {
                     if (exists) {
                         return Mono.error(new CompanyVatAlreadyExistsException("VAT already exists."));
                     }
-                    return companyRepository.createOrUpdateCompany(null, company);
+                    return companyRepository.createOrUpdateCompany(null, company)
+                            .flatMap(createdCompany -> eventPublisher
+                                    .publish(new CompanyCreatedEvent(createdCompany.getId()))
+                                    .thenReturn(createdCompany));
                 });
 
     }
@@ -75,7 +82,9 @@ public class CompanyServiceImpl implements CompanyService {
                     existing.setCompanyName(companyUpdateDTO.getCompanyName());
                     existing.setVat(companyUpdateDTO.getVat());
                     existing.setAddress(companyUpdateDTO.getAddress());
-                    return companyRepository.createOrUpdateCompany(id, existing);
+                    return companyRepository.createOrUpdateCompany(id, existing)
+                            .flatMap(updatedCompany -> eventPublisher
+                                    .publish(new CompanyUpdatedEvent(updatedCompany.getId())));
                 })
                 .then();
     }
@@ -87,7 +96,8 @@ public class CompanyServiceImpl implements CompanyService {
         }
         return companyRepository.getCompanyById(id)
                 .switchIfEmpty(Mono.error(new CompanyNotFoundException("Company with id: " + id + " not found")))
-                .flatMap(company -> companyRepository.deleteCompany(id));
+                .flatMap(company -> companyRepository.deleteCompany(id)
+                        .then(eventPublisher.publish(new CompanyDeletedEvent(company.getId()))));
     }
 
 }

@@ -1,19 +1,21 @@
 package com.itsaur.repository.elastic_events;
 
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import com.itsaur.event.CompanyUpdatedEvent;
 import com.itsaur.event.DomainEventListener;
+import com.itsaur.model.CompanyQueryModel;
 import com.itsaur.repository.CompanyRepository;
-import com.itsaur.repository.ElasticCompanyRepository;
 import reactor.core.publisher.Mono;
 
 public class CompanyUpdatedElasticEventListener implements DomainEventListener<CompanyUpdatedEvent> {
 
     private final CompanyRepository companyRepository;
-    private final ElasticCompanyRepository elasticRepository;
+    private final ElasticsearchAsyncClient client;
 
-    public CompanyUpdatedElasticEventListener(CompanyRepository companyRepository, ElasticCompanyRepository elasticRepository) {
+    public CompanyUpdatedElasticEventListener(CompanyRepository companyRepository, ElasticsearchAsyncClient client) {
         this.companyRepository = companyRepository;
-        this.elasticRepository = elasticRepository;
+        this.client = client;
+
     }
 
     @Override
@@ -24,7 +26,26 @@ public class CompanyUpdatedElasticEventListener implements DomainEventListener<C
     @Override
     public Mono<Void> handle(CompanyUpdatedEvent event) {
         return companyRepository.getCompanyById(event.getCompanyId())
-                .flatMap(updatedCompany ->
-                        elasticRepository.createOrUpdateCompany(updatedCompany.getId(), updatedCompany)).then();
+                .flatMap(company -> {
+
+                    CompanyQueryModel qm = new CompanyQueryModel(
+                            company.getId(),
+                            company.getCompanyName(),
+                            company.getAddress(),
+                            company.getVat(),
+                            0L,
+                            company.getCreatedAt(),
+                            company.getUpdatedAt()
+                    );
+
+                    return Mono.fromFuture(() ->
+                            client.index(i -> i
+                                    .index("companies")
+                                    .id(String.valueOf(company.getId()))
+                                    .document(qm)
+                            )
+                    );
+                })
+                .then();
     }
 }
