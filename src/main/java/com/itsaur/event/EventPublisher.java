@@ -16,7 +16,7 @@ public class EventPublisher {
     public Mono<Void> publish(DomainEvent event) {
         return Flux.fromIterable(listeners)
                 .filter(listener -> listener.eventType().isInstance(event))
-                .flatMap(listener -> invoke(listener, event))
+                .concatMap(listener -> invoke(listener, event))
                 .then();
     }
 
