@@ -1,6 +1,8 @@
 package com.itsaur.repository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.CountRequest;
 import co.elastic.clients.elasticsearch.core.CountResponse;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -41,7 +43,6 @@ public class ElasticCompanyQueryRepository implements CompanyQueryRepository{
         SearchRequest request = SearchRequest.of(s -> s
                 .index("companies")
                 .query(q -> q.matchAll(m -> m)));
-
         return Mono.fromFuture(() -> client
                         .search(request, CompanyQueryModel.class))
                 .flatMapMany(resp -> Flux.fromIterable(resp.hits().hits()))
@@ -70,11 +71,30 @@ public class ElasticCompanyQueryRepository implements CompanyQueryRepository{
 
     @Override
     public Flux<CompanyQueryModel> paginatedCompanyFilterQuery(SearchComponent searchComponent, Integer page, Integer size) {
-        return null;
+        int offset = page * size;
+        Query query = queryBuilder.build(searchComponent);
+
+        SearchRequest request = SearchRequest.of(s -> s.index("companies")
+                .from(offset)
+                .size(size)
+                .query(query)
+        );
+
+        return Mono.fromFuture(() -> client.search(request, CompanyQueryModel.class))
+                .flatMapMany(resp -> Flux.fromIterable(resp.hits().hits()))
+                .map(Hit::source);
     }
 
     @Override
     public Mono<Long> countViewCompanies(SearchComponent searchComponent) {
-        return null;
+        Query query = queryBuilder.build(searchComponent);
+
+        CountRequest request = CountRequest.of(c -> c
+                .index("companies")
+                .query(query)
+        );
+
+        return Mono.fromFuture(() -> client.count(request))
+                .map(CountResponse::count);
     }
 }

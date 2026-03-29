@@ -1,10 +1,12 @@
 package com.itsaur.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.OffsetDateTime;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CompanyQueryModel {
     private Long id;
     private String companyName;

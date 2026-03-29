@@ -94,6 +94,7 @@ public class Application {
             DomainEventListener<?> employeeDeletedElasticEventListener = new EmployeeDeletedElasticEventListener(employeeRepository, client);
             DomainEventListener<?> employeeIncrementCompanyTotalEmployeesListener = new EmployeeCreateIncrementTotalEmployeesListener(client);
             DomainEventListener<?> employeeDecrementCompanyTotalEmployeesListener = new EmployeeDeletedDecrementTotalEmployeesListener(client);
+            DomainEventListener<?> employeeNameAddToCompanyListener = new IndexEmployeeNameToCompanyElasticEventListener(client);
 
             List<DomainEventListener<?>> listeners = List.of(
                     companyCreatedLoggingEventListener,
@@ -109,7 +110,8 @@ public class Application {
                     employeeDeletedLoggingEventListener,
                     employeeDeletedElasticEventListener,
                     employeeIncrementCompanyTotalEmployeesListener,
-                    employeeDecrementCompanyTotalEmployeesListener
+                    employeeDecrementCompanyTotalEmployeesListener,
+                    employeeNameAddToCompanyListener
             );
 
             EventPublisher publisher = new EventPublisher(listeners);
