@@ -68,7 +68,9 @@ public class EmployeeServiceImpl implements EmployeeService {
                         // Αν βρεθει η εταρεια με το id που δωσαμε τοτε θα προχωρησει στο save
                         return employeeRepository.createOrUpdateEmployee(null, employee)
                                 .flatMap(employeeCreated -> eventPublisher
-                                        .publish(new EmployeeCreatedEvent(employeeCreated.getId(), employeeCreated.getCompanyId()))
+                                        .publish(new EmployeeCreatedEvent(
+                                                employeeCreated.getId(), employeeCreated.getCompanyId(),
+                                                employeeCreated.getFirstname(), employeeCreated.getLastname()))
                                         .thenReturn(employeeCreated));
                     });
         });
