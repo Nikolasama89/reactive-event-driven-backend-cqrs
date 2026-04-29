@@ -6,6 +6,15 @@ group = 'com.itsaur'
 version = '1.0-SNAPSHOT'
 
 repositories {
+    maven {
+        name = 'Central Portal Snapshots'
+        url = 'https://central.sonatype.com/repository/maven-snapshots/'
+        // Only search this repository for the specific dependency
+        content {
+            includeModule("com.rabbitmq.jms", "rabbitmq-jms")
+        }
+    }
+
     mavenCentral()
 }
 
@@ -32,6 +41,7 @@ dependencies {
     // https://mvnrepository.com/artifact/org.json/json
     implementation 'org.json:json:20251224'
     implementation 'co.elastic.clients:elasticsearch-java:8.12.0'
+    implementation "com.rabbitmq.jms:rabbitmq-jms:3.6.0"
 }
 
 test {
