@@ -1,9 +1,9 @@
 package com.itsaur.service;
 
-import com.itsaur.dto.ComplexSearchRequestDTO;
+import com.itsaur.repository.search.ComplexSearchRequestDTO;
 import com.itsaur.dto.PageDTO;
-import com.itsaur.dto.SearchComponent;
-import com.itsaur.dto.SimpleSearchRequestDTO;
+import com.itsaur.repository.search.SearchComponent;
+import com.itsaur.repository.search.SimpleSearchRequestDTO;
 import com.itsaur.exceptions.*;
 import com.itsaur.model.EmployeeQueryModel;
 import com.itsaur.repository.EmployeeQueryRepository;

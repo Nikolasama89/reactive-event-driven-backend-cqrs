@@ -1,7 +1,7 @@
 package com.itsaur.service;
 
 import com.itsaur.dto.PageDTO;
-import com.itsaur.dto.SearchComponent;
+import com.itsaur.repository.search.SearchComponent;
 import com.itsaur.model.CompanyQueryModel;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
