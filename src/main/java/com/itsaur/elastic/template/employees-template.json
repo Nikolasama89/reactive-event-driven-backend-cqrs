@@ -1,0 +1,61 @@
+{
+  "index_patterns": ["employees*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "id": {
+          "type": "long"
+        },
+        "firstname": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "lastname": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "email": {
+          "type": "keyword"
+        },
+        "companyId": {
+          "type": "long"
+        },
+        "companyName": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "companyAddress": {
+          "type": "text"
+        },
+        "createdAt": {
+          "type": "date",
+          "format": "strict_date_time"
+        },
+        "updatedAt": {
+          "type": "date",
+          "format": "strict_date_time"
+        }
+      }
+    }
+  }
+}

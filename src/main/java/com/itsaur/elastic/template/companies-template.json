@@ -1,0 +1,69 @@
+{
+  "index_patterns": ["companies*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "id": {
+          "type": "long"
+        },
+        "companyName": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "vat": {
+          "type": "keyword"
+        },
+        "address": {
+          "type": "text"
+        },
+        "total_employees": {
+          "type": "long"
+        },
+        "createdAt": {
+          "type": "date",
+          "format": "strict_date_time"
+        },
+        "employees": {
+          "type": "nested",
+          "properties": {
+            "id": {
+              "type": "long"
+            },
+            "firstname": {
+              "type": "text",
+              "fields": {
+                "keyword":{
+                  "type":"keyword"
+                }
+              }
+            },
+            "lastname": {
+              "type": "text",
+              "fields":{
+                "keyword":{
+                  "type":"keyword"
+                }
+              }
+            }
+          }
+        },
+        "updatedAt": {
+          "type": "date",
+          "format": "strict_date_time"
+        }
+      }
+    }
+  },
+  "priority": 100,
+  "version": 1
+}
