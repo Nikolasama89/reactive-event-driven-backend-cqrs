@@ -1,21 +1,25 @@
 package com.itsaur.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.json.JSONObject;
 
 import java.time.OffsetDateTime;
 
 public class Company {
-    private Long id;
-    private String companyName;
-    private String vat;
-    private String address;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
+    private final CompanyId id;
+    private final CompanyName companyName;
+    private final Vat vat;
+    private final Address address;
+    private final OffsetDateTime createdAt;
+    private final OffsetDateTime updatedAt;
 
-    public Company() {}
 
-    public Company(Long id, String companyName, String vat, String address, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    private Company(
+            CompanyId id,
+            CompanyName companyName,
+            Vat vat,
+            Address address,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt
+    ) {
         this.id = id;
         this.companyName = companyName;
         this.vat = vat;
@@ -24,52 +28,74 @@ public class Company {
         this.updatedAt = updatedAt;
     }
 
-    public Long getId() {
+    public static Company create(
+            String companyName,
+            String vat,
+            String address
+    ) {
+        OffsetDateTime now = OffsetDateTime.now();
+        return new Company(
+                CompanyId.generateId(),
+                CompanyName.create(companyName),
+                Vat.create(vat),
+                Address.create(address),
+                now,
+                now
+        );
+    }
+
+    public Company update(String companyName, String vat, String address){
+        return new Company(
+                this.id,
+                CompanyName.create(companyName),
+                Vat.create(vat),
+                Address.create(address),
+                this.createdAt,
+                OffsetDateTime.now()
+        );
+    }
+
+
+    public static Company construct(
+            Long id,
+            String companyName,
+            String vat,
+            String address,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt
+    ) {
+        return new Company(
+                CompanyId.construct(id),
+                CompanyName.construct(companyName),
+                Vat.construct(vat),
+                Address.construct(address),
+                createdAt,
+                updatedAt
+        );
+    }
+
+    public CompanyId getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getCompanyName() {
+    public CompanyName getCompanyName() {
         return companyName;
     }
 
-    public void setCompanyName(String companyName) {
-        this.companyName = companyName;
-    }
-
-    public String getVat() {
+    public Vat getVat() {
         return vat;
-    }
-
-    public void setVat(String vat) {
-        this.vat = vat;
     }
 
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public String getAddress() {
+    public Address getAddress() {
         return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
     }
 
     public OffsetDateTime getUpdatedAt() {
         return updatedAt;
-    }
-
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     @Override

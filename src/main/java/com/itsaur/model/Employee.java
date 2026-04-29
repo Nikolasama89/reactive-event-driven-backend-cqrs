@@ -1,26 +1,27 @@
 package com.itsaur.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.json.JSONObject;
 
 import java.time.OffsetDateTime;
 
 public class Employee {
-    private Long id;
-    private String firstname;
-    private String lastname;
-    private String email;
-    private Long companyId;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
+    private final EmployeeId id;
+    private final FullName fullName;
+    private final Email email;
+    private final CompanyId companyId;
+    private final OffsetDateTime createdAt;
+    private final OffsetDateTime updatedAt;
 
-    public Employee() {}
 
-    public Employee(Long id, String firstname, String lastname, String email, Long companyId,
-                    OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    private Employee(
+            EmployeeId id,
+            FullName fullName,
+            Email email,
+            CompanyId companyId,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt
+    ) {
         this.id = id;
-        this.firstname = firstname;
-        this.lastname = lastname;
+        this.fullName = fullName;
         this.email = email;
         this.companyId = companyId;
         this.createdAt = createdAt;
@@ -28,75 +29,84 @@ public class Employee {
 
     }
 
-    public Employee(String firstname, String lastname, String email, Long companyId) {
-        this.firstname = firstname;
-        this.lastname = lastname;
-        this.email = email;
-        this.companyId = companyId;
+    public static Employee create(
+            String firstname,
+            String lastname,
+            String email,
+            Long companyId
+    ) {
+        OffsetDateTime now = OffsetDateTime.now();
+        return new Employee(
+                EmployeeId.generateId(),
+                FullName.create(firstname, lastname),
+                Email.create(email),
+                CompanyId.create(companyId),
+                now,
+                now
+        );
     }
 
-    public Long getId() {
+    public Employee update(String firstname, String lastname){
+        return new Employee(
+                this.id,
+                FullName.create(firstname, lastname),
+                this.email,
+                this.companyId,
+                this.createdAt,
+                OffsetDateTime.now()
+        );
+    }
+
+    public static Employee construct(
+            Long id,
+            String firstname,
+            String lastname,
+            String email,
+            Long companyId,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt
+    ) {
+        return new Employee(
+                EmployeeId.construct(id),
+                FullName.construct(firstname, lastname),
+                Email.construct(email),
+                CompanyId.construct(companyId),
+                createdAt,
+                updatedAt
+        );
+    }
+
+
+    public EmployeeId getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public FullName getFullName(){
+        return fullName;
     }
 
-    public String getFirstname() {
-        return firstname;
-    }
-
-    public void setFirstname(String firstname) {
-        this.firstname = firstname;
-    }
-
-    public String getLastname() {
-        return lastname;
-    }
-
-    public void setLastname(String lastname) {
-        this.lastname = lastname;
-    }
-
-    public String getEmail() {
+    public Email getEmail() {
         return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public OffsetDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Long getCompanyId() {
+    public CompanyId getCompanyId() {
         return companyId;
-    }
-
-    public void setCompanyId(Long companyId) {
-        this.companyId = companyId;
     }
 
     @Override
     public String toString() {
         return "Employee{" +
                 "id=" + id +
-                ", firstname='" + firstname + '\'' +
-                ", lastname='" + lastname + '\'' +
+                ", firstname='" + fullName.getFirstname() + '\'' +
+                ", lastname='" + fullName.getLastname() + '\'' +
                 ", email='" + email + '\'' +
                 ", companyId=" + companyId +
                 ", createdAt=" + createdAt +
