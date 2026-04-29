@@ -1,8 +1,8 @@
 package com.itsaur.serializer;
 
-import com.itsaur.dto.SearchComponent;
-import com.itsaur.dto.ComplexSearchRequestDTO;
-import com.itsaur.dto.SimpleSearchRequestDTO;
+import com.itsaur.repository.search.SearchComponent;
+import com.itsaur.repository.search.ComplexSearchRequestDTO;
+import com.itsaur.repository.search.SimpleSearchRequestDTO;
 import com.itsaur.dto.enums.SearchFieldCondition;
 import com.itsaur.dto.enums.LogicOperator;
 import com.itsaur.dto.enums.TypeCondition;
@@ -47,7 +47,7 @@ public class JSONSearchComponentQueryDeserializer implements Deserializer<Search
 
         SimpleSearchRequestDTO simpleSearchRequestDTO = new SimpleSearchRequestDTO();
         simpleSearchRequestDTO.setType(TypeCondition.valueOf(object.getString("type").toUpperCase()));
-        simpleSearchRequestDTO.setField(SearchFieldCondition.valueOf(object.getString("field").toUpperCase()));
+        simpleSearchRequestDTO.setSearchField(SearchFieldCondition.valueOf(object.getString("field").toUpperCase()));
 
         Object rawObject = object.get("value");
 

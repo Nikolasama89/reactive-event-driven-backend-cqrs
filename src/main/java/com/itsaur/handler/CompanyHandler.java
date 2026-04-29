@@ -4,6 +4,7 @@ import com.itsaur.dto.*;
 import com.itsaur.exceptions.*;
 import com.itsaur.model.Company;
 import com.itsaur.model.CompanyQueryModel;
+import com.itsaur.repository.search.SearchComponent;
 import com.itsaur.serializer.*;
 import com.itsaur.service.CompanyQueryService;
 import com.itsaur.service.CompanyService;
@@ -121,7 +122,7 @@ public class CompanyHandler {
                 .flatMap(companyService::save)
                 .flatMap(saved -> {
                     res.status(201);
-                    CreateResponseDTO responseDTO = new CreateResponseDTO(saved.getId());
+                    CreateResponseDTO responseDTO = new CreateResponseDTO(saved.getId().getValue());
                     deserializerCreate.contentType(res);
                     return res.sendByteArray(Mono.just(responseSerializer.serialize(responseDTO))).then();
                 })

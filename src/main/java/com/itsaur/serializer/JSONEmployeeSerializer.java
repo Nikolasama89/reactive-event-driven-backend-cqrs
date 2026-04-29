@@ -11,8 +11,8 @@ public class JSONEmployeeSerializer implements Serializer<Employee> {
     public byte[] serialize(Employee employee) {
         JSONObject json = new JSONObject();
         json.put("id", employee.getId());
-        json.put("firstname", employee.getFirstname());
-        json.put("lastname", employee.getLastname());
+        json.put("firstname", employee.getFullName().getFirstname());
+        json.put("lastname", employee.getFullName().getLastname());
         json.put("email", employee.getEmail());
         json.put("companyId", employee.getCompanyId());
         json.put("created_at", employee.getCreatedAt());

@@ -4,6 +4,7 @@ import com.itsaur.dto.*;
 import com.itsaur.exceptions.*;
 import com.itsaur.model.Employee;
 import com.itsaur.model.EmployeeQueryModel;
+import com.itsaur.repository.search.SearchComponent;
 import com.itsaur.serializer.*;
 import com.itsaur.service.EmployeeQueryService;
 import com.itsaur.service.EmployeeService;
@@ -122,7 +123,7 @@ public class EmployeeHandler {
                 .flatMap(service::save)
                 .flatMap(saved -> {
                     res.status(201);
-                    CreateResponseDTO responseDTO = new CreateResponseDTO(saved.getId());
+                    CreateResponseDTO responseDTO = new CreateResponseDTO(saved.getId().getValue());
                     deserializerCreate.contentType(res);
                     return res.sendByteArray(Mono.just(responseSerializer.serialize(responseDTO))).then();
                 })
