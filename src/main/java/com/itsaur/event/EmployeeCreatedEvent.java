@@ -1,32 +1,61 @@
 package com.itsaur.event;
 
+import com.itsaur.model.*;
+
+import java.time.OffsetDateTime;
+
 public class EmployeeCreatedEvent implements DomainEvent{
+    private final EmployeeId employeeId;
+    private final CompanyId companyId;
+    private final FullName fullName;
+    private final Email email;
+    private final CompanyName companyName;
+    private final Address companyAddress;
+    private final OffsetDateTime occurredAt;
 
-    private final Long employeeId;
-    private final Long companyId;
-    private final String firstname;
-    private final String lastname;
-
-    public EmployeeCreatedEvent(Long employeeId, Long companyId, String firstname, String lastname) {
+    public EmployeeCreatedEvent(
+            EmployeeId employeeId,
+            CompanyId companyId,
+            FullName fullName,
+            Email email,
+            CompanyName companyName,
+            Address companyAddress,
+            OffsetDateTime occurredAt
+    ) {
         this.employeeId = employeeId;
         this.companyId = companyId;
-        this.firstname = firstname;
-        this.lastname = lastname;
+        this.fullName = fullName;
+        this.email = email;
+        this.companyName = companyName;
+        this.companyAddress = companyAddress;
+        this.occurredAt = occurredAt;
     }
 
-    public Long getEmployeeId() {
+    public EmployeeId getEmployeeId() {
         return employeeId;
     }
 
-    public Long getCompanyId() {
+    public CompanyId getCompanyId() {
         return companyId;
     }
 
-    public String getFirstname() {
-        return firstname;
+    public FullName getFullName(){
+        return fullName;
     }
 
-    public String getLastname() {
-        return lastname;
+    public Email getEmail() {
+        return email;
+    }
+
+    public CompanyName getCompanyName() {
+        return companyName;
+    }
+
+    public Address getCompanyAddress() {
+        return companyAddress;
+    }
+
+    public OffsetDateTime getOccurredAt(){
+        return occurredAt;
     }
 }

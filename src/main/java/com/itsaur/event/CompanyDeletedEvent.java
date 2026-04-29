@@ -1,13 +1,15 @@
 package com.itsaur.event;
 
-public class CompanyDeletedEvent implements DomainEvent{
-    private final Long companyId;
+import com.itsaur.model.CompanyId;
 
-    public CompanyDeletedEvent(Long companyId) {
+public class CompanyDeletedEvent implements DomainEvent{
+    private final CompanyId companyId;
+
+    public CompanyDeletedEvent(CompanyId companyId) {
         this.companyId = companyId;
     }
 
-    public Long getCompanyId() {
+    public CompanyId getCompanyId() {
         return companyId;
     }
 }
