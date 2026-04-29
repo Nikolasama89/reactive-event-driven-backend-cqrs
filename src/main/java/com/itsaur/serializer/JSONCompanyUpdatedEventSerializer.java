@@ -1,0 +1,21 @@
+package com.itsaur.serializer;
+
+import com.itsaur.event.CompanyUpdatedEvent;
+import org.json.JSONObject;
+
+import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
+
+public class JSONCompanyUpdatedEventSerializer implements Serializer<CompanyUpdatedEvent>{
+    @Override
+    public byte[] serialize(CompanyUpdatedEvent event) {
+        JSONObject json = new JSONObject();
+        json.put("id", event.getCompanyId().getValue());
+        json.put("company_name", event.getCompanyName().getValue());
+        json.put("vat", event.getVat().getValue());
+        json.put("address", event.getAddress().getValue());
+        json.put("createdAt", event.getOccurredAt());
+        json.put("updatedAt", OffsetDateTime.now());
+        return json.toString().getBytes(StandardCharsets.UTF_8);
+    }
+}
