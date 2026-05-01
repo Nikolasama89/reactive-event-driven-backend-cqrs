@@ -17,8 +17,7 @@ public class JSONEmployeeUpdatedEventSerializer implements Serializer<EmployeeUp
         json.put("email", event.getEmail().getValue());
         json.put("companyName", event.getCompanyName().getValue());
         json.put("companyAddress", event.getCompanyAddress().getValue());
-        json.put("createdAt", event.getOccurredAt());
-        json.put("updatedAt", OffsetDateTime.now());
+        json.put("occurredAt", event.getOccurredAt());
         return json.toString().getBytes(StandardCharsets.UTF_8);
     }
 }

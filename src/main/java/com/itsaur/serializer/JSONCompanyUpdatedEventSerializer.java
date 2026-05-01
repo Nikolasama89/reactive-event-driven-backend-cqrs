@@ -14,8 +14,7 @@ public class JSONCompanyUpdatedEventSerializer implements Serializer<CompanyUpda
         json.put("company_name", event.getCompanyName().getValue());
         json.put("vat", event.getVat().getValue());
         json.put("address", event.getAddress().getValue());
-        json.put("createdAt", event.getOccurredAt());
-        json.put("updatedAt", OffsetDateTime.now());
+        json.put("occurredAt", event.getOccurredAt());
         return json.toString().getBytes(StandardCharsets.UTF_8);
     }
 }

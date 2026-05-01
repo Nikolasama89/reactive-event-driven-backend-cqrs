@@ -22,6 +22,6 @@ public class JSONCompanyCreatedEventDeserializer implements Deserializer<Company
                 CompanyName.create(jsonObject.getString("company_name")),
                 Vat.create(jsonObject.getString("vat")),
                 Address.create(jsonObject.getString("address")),
-                OffsetDateTime.parse(jsonObject.getString("createdAt")));
+                OffsetDateTime.parse(jsonObject.getString("occurredAt")));
     }
 }

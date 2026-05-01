@@ -18,6 +18,6 @@ public class JSONCompanyUpdatedEventDeserializer implements Deserializer<Company
                 CompanyName.create(jsonObject.getString("company_name")),
                 Vat.create(jsonObject.getString("vat")),
                 Address.create(jsonObject.getString("address")),
-                OffsetDateTime.parse(jsonObject.getString("updatedAt")));
+                OffsetDateTime.parse(jsonObject.getString("occurredAt")));
     }
 }

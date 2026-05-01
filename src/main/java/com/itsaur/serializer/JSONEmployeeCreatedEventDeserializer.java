@@ -17,6 +17,6 @@ public class JSONEmployeeCreatedEventDeserializer implements Deserializer<Employ
                 Email.create(jsonObject.getString("email")),
                 CompanyName.create(jsonObject.getString("companyName")),
                 Address.create(jsonObject.getString("companyAddress")),
-                OffsetDateTime.parse(jsonObject.getString("createdAt")));
+                OffsetDateTime.parse(jsonObject.getString("occurredAt")));
     }
 }
