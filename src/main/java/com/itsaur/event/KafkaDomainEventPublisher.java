@@ -36,6 +36,4 @@ public class KafkaDomainEventPublisher implements EventPublisher{
         return sender.send(Mono.just(senderRecord))
                 .then();
     }
-
-
 }
