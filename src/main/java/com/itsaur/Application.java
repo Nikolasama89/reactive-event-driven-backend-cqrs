@@ -35,9 +35,12 @@ import com.itsaur.sql.repository.DBEmployeeQueryRepository;
 import com.itsaur.sql.repository.DBEmployeeRepository;
 import com.itsaur.util.DbConnector;
 import com.itsaur.util.ElasticSearchConfig;
+import com.itsaur.util.KafkaConfig;
 import com.itsaur.util.RabbitMQConfig;
 import com.rabbitmq.client.Channel;
 import io.r2dbc.spi.ConnectionFactory;
+import reactor.kafka.receiver.KafkaReceiver;
+import reactor.kafka.sender.KafkaSender;
 import reactor.netty.DisposableServer;
 import reactor.netty.http.server.HttpServer;
 
@@ -193,9 +196,18 @@ public class Application {
             DomainEventListener<?> employeeUpdateNameAtCompanyIndexListener =
                     new IndexUpdateEmployeeInCompanyElasticEventListener(client);
 
-            Channel publisherChannel = RabbitMQConfig.getChannel();
-            Channel consumerChannel = RabbitMQConfig.getChannel();
-            String exchange = "domain.events";
+            String bootstrapServers = "localhost:9092";
+            String topic = "domain-events";
+
+            KafkaSender<String, byte[]> sender =
+                    KafkaConfig.createProducer(bootstrapServers);
+
+            KafkaReceiver<String, byte[]> receiver =
+                    KafkaConfig.createReceiver(bootstrapServers, topic);
+
+//            Channel publisherChannel = RabbitMQConfig.getChannel();
+//            Channel consumerChannel = RabbitMQConfig.getChannel();
+//            String exchange = "domain.events";
 
             List<DomainEventListener<?>> listeners = List.of(
                     dbCompanyCreatedEventListener,
@@ -232,25 +244,30 @@ public class Application {
                     "EmployeeDeletedEvent", new JSONEmployeeDeletedEventDeserializer()
             );
 
-            RabbitConsumer companyConsumer = new RabbitConsumer(
-                    consumerChannel,
-                    "company.queue",
-                    listeners,
-                    deserializerMap,
-                    exchange,
-                    new String[]{"CompanyCreatedEvent", "CompanyUpdatedEvent", "CompanyDeletedEvent"}
-            );
+            KafkaDomainEventConsumer kafkaConsumer =
+                    new KafkaDomainEventConsumer(receiver, listeners, deserializerMap);
 
-            RabbitConsumer employeeConsumer = new RabbitConsumer(
-                    consumerChannel,
-                    "employee.queue",
-                    listeners,
-                    deserializerMap,
-                    exchange,
-                    new String[]{"EmployeeCreatedEvent", "EmployeeUpdatedEvent", "EmployeeDeletedEvent"});
+            kafkaConsumer.startConsuming();
 
-            companyConsumer.startConsuming();
-            employeeConsumer.startConsuming();
+//            RabbitConsumer companyConsumer = new RabbitConsumer(
+//                    consumerChannel,
+//                    "company.queue",
+//                    listeners,
+//                    deserializerMap,
+//                    exchange,
+//                    new String[]{"CompanyCreatedEvent", "CompanyUpdatedEvent", "CompanyDeletedEvent"}
+//            );
+//
+//            RabbitConsumer employeeConsumer = new RabbitConsumer(
+//                    consumerChannel,
+//                    "employee.queue",
+//                    listeners,
+//                    deserializerMap,
+//                    exchange,
+//                    new String[]{"EmployeeCreatedEvent", "EmployeeUpdatedEvent", "EmployeeDeletedEvent"});
+//
+//            companyConsumer.startConsuming();
+//            employeeConsumer.startConsuming();
 
             Map<Class<? extends DomainEvent>, Serializer<? extends DomainEvent>> serializerMap = Map.of(
                     CompanyCreatedEvent.class, new JSONCompanyCreatedEventSerializer(),
@@ -264,7 +281,9 @@ public class Application {
             Serializer<DomainEvent> domainSerializer =
                     new DomainEventSerializer(serializerMap);
 
-            eventPublisher = new RabbitDomainEventPublisher(publisherChannel, exchange, domainSerializer);
+            eventPublisher = new KafkaDomainEventPublisher(sender, topic, domainSerializer);
+
+//            eventPublisher = new RabbitDomainEventPublisher(publisherChannel, exchange, domainSerializer);
 
             employeeService = new EmployeeServiceImpl(employeeRepository, companyRepository, eventPublisher);
             companyService = new CompanyServiceImpl(companyRepository, eventPublisher);
