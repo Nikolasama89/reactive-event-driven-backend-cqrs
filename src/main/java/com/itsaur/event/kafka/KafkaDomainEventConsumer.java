@@ -1,5 +1,7 @@
-package com.itsaur.event;
+package com.itsaur.event.kafka;
 
+import com.itsaur.event.DomainEvent;
+import com.itsaur.event.DomainEventListener;
 import com.itsaur.serializer.Deserializer;
 import org.apache.kafka.common.header.Header;
 import org.slf4j.Logger;

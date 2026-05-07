@@ -9,6 +9,8 @@ import com.itsaur.elastic.service.ElasticCompanyQueryServiceImpl;
 import com.itsaur.elastic.service.ElasticEmployeeQueryServiceImpl;
 import com.itsaur.event.*;
 import com.itsaur.event.db.*;
+import com.itsaur.event.kafka.KafkaDomainEventConsumer;
+import com.itsaur.event.kafka.KafkaDomainEventPublisher;
 import com.itsaur.event.logging.*;
 import com.itsaur.handler.CompanyHandler;
 import com.itsaur.handler.EmployeeHandler;

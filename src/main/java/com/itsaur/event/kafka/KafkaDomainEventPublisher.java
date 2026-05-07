@@ -1,5 +1,7 @@
-package com.itsaur.event;
+package com.itsaur.event.kafka;
 
+import com.itsaur.event.DomainEvent;
+import com.itsaur.event.EventPublisher;
 import com.itsaur.serializer.Serializer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
@@ -9,7 +11,7 @@ import reactor.kafka.sender.SenderRecord;
 
 import java.nio.charset.StandardCharsets;
 
-public class KafkaDomainEventPublisher implements EventPublisher{
+public class KafkaDomainEventPublisher implements EventPublisher {
     private final KafkaSender<String, byte[]> sender;
     private final String topic;
     private final Serializer<DomainEvent> serializer;
