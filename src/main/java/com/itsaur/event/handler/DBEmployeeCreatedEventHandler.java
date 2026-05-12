@@ -1,8 +1,5 @@
 package com.itsaur.event.handler;
 
-import com.itsaur.elastic.event.EmployeeCreateIncrementTotalEmployeesListener;
-import com.itsaur.elastic.event.EmployeeCreatedElasticEventListener;
-import com.itsaur.elastic.event.IndexAddEmployeeNameToCompanyElasticEventListener;
 import com.itsaur.event.DomainEventListener;
 import com.itsaur.event.EmployeeCreatedEvent;
 import com.itsaur.event.db.DBEmployeeCreatedEventListener;
