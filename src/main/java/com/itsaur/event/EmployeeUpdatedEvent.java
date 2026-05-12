@@ -57,4 +57,9 @@ public class EmployeeUpdatedEvent implements DomainEvent{
     public OffsetDateTime getOccurredAt() {
         return occurredAt;
     }
+
+    @Override
+    public String aggregateId() {
+        return employeeId.toString();
+    }
 }

@@ -47,4 +47,9 @@ public class CompanyCreatedEvent implements DomainEvent {
     public OffsetDateTime getOccurredAt() {
         return occurredAt;
     }
+
+    @Override
+    public String aggregateId() {
+        return companyId.toString();
+    }
 }

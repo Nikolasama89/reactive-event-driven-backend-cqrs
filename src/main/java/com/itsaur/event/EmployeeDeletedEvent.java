@@ -20,4 +20,9 @@ public class EmployeeDeletedEvent implements DomainEvent{
     public CompanyId getCompanyId() {
         return companyId;
     }
+
+    @Override
+    public String aggregateId() {
+        return employeeId.toString();
+    }
 }
