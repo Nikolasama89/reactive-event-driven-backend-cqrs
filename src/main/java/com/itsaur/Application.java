@@ -9,9 +9,11 @@ import com.itsaur.elastic.service.ElasticCompanyQueryServiceImpl;
 import com.itsaur.elastic.service.ElasticEmployeeQueryServiceImpl;
 import com.itsaur.event.*;
 import com.itsaur.event.db.*;
-import com.itsaur.event.kafka.KafkaDomainEventConsumer;
-import com.itsaur.event.kafka.KafkaDomainEventPublisher;
+import com.itsaur.event.handler.*;
+import com.itsaur.event.kafka.*;
 import com.itsaur.event.logging.*;
+import com.itsaur.event.rabbitMQ.RabbitConsumer;
+import com.itsaur.event.rabbitMQ.RabbitDomainEventPublisher;
 import com.itsaur.handler.CompanyHandler;
 import com.itsaur.handler.EmployeeHandler;
 import com.itsaur.inMemory.repository.InMemoryCompanyQueryRepository;
@@ -160,43 +162,160 @@ public class Application {
 
             ElasticEmployeeQueryRepository elasticEmployeeQueryRepository =
                     new ElasticEmployeeQueryRepository(client, employeeQueryBuilder);
+
             ElasticCompanyQueryRepository elasticCompanyQueryRepository =
                     new ElasticCompanyQueryRepository(client, companyQueryBuilder);
 
-            DomainEventListener<?> companyCreatedLoggingEventListener = new CompanyCreatedLoggingEventListener();
-            DomainEventListener<?> companyUpdatedLoggingListener = new CompanyUpdatedLoggingEventListener();
-            DomainEventListener<?> companyDeletedLoggingEventListener = new CompanyDeletedLoggingEventListener();
-            DomainEventListener<?> employeeCreatedLoggingEventListener = new EmployeeCreatedLoggingEventListener();
-            DomainEventListener<?> employeeUpdatedLoggingEventListener = new EmployeeUpdatedLoggingEventListener();
-            DomainEventListener<?> employeeDeletedLoggingEventListener = new EmployeeDeletedLoggingEventListener();
-            DomainEventListener<?> dbCompanyCreatedEventListener = new DBCompanyCreatedEventListener(companyRepository);
-            DomainEventListener<?> dbCompanyUpdatedEventListener = new DBCompanyUpdatedEventListener(companyRepository);
-            DomainEventListener<?> dbCompanyDeletedEventListener = new DBCompanyDeletedEventListener(companyRepository);
-            DomainEventListener<?> dbEmployeeCreatedEventListener = new DBEmployeeCreatedEventListener(employeeRepository);
-            DomainEventListener<?> dbEmployeeUpdatedEventListener = new DBEmployeeUpdatedEventListener(employeeRepository);
-            DomainEventListener<?> dbEmployeeDeletedEventListener = new DBEmployeeDeletedEventListener(employeeRepository);
-            DomainEventListener<?> companyCreatedElasticEventListener =
+            CompanyCreatedLoggingEventListener companyCreatedLoggingEventListener =
+                    new CompanyCreatedLoggingEventListener();
+
+            CompanyUpdatedLoggingEventListener companyUpdatedLoggingListener =
+                    new CompanyUpdatedLoggingEventListener();
+
+            CompanyDeletedLoggingEventListener companyDeletedLoggingEventListener =
+                    new CompanyDeletedLoggingEventListener();
+
+            EmployeeCreatedLoggingEventListener employeeCreatedLoggingEventListener =
+                    new EmployeeCreatedLoggingEventListener();
+
+            EmployeeUpdatedLoggingEventListener employeeUpdatedLoggingEventListener =
+                    new EmployeeUpdatedLoggingEventListener();
+
+            EmployeeDeletedLoggingEventListener employeeDeletedLoggingEventListener =
+                    new EmployeeDeletedLoggingEventListener();
+
+            DBCompanyCreatedEventListener dbCompanyCreatedEventListener =
+                    new DBCompanyCreatedEventListener(companyRepository);
+
+            DBCompanyUpdatedEventListener dbCompanyUpdatedEventListener =
+                    new DBCompanyUpdatedEventListener(companyRepository);
+
+            DBCompanyDeletedEventListener dbCompanyDeletedEventListener =
+                    new DBCompanyDeletedEventListener(companyRepository);
+
+            DBEmployeeCreatedEventListener dbEmployeeCreatedEventListener =
+                    new DBEmployeeCreatedEventListener(employeeRepository);
+
+            DBEmployeeUpdatedEventListener dbEmployeeUpdatedEventListener =
+                    new DBEmployeeUpdatedEventListener(employeeRepository);
+
+            DBEmployeeDeletedEventListener dbEmployeeDeletedEventListener =
+                    new DBEmployeeDeletedEventListener(employeeRepository);
+
+            CompanyCreatedElasticEventListener companyCreatedElasticEventListener =
                     new CompanyCreatedElasticEventListener(client);
-            DomainEventListener<?> companyUpdatedElasticEventListener =
+
+            CompanyUpdatedElasticEventListener companyUpdatedElasticEventListener =
                     new CompanyUpdatedElasticEventListener(client);
-            DomainEventListener<?> companyDeletedElasticEventListener =
+
+            CompanyDeletedElasticEventListener companyDeletedElasticEventListener =
                     new CompanyDeletedElasticEventListener(client);
-            DomainEventListener<?> employeeCreatedElasticEventListener =
+
+            EmployeeAfterCompanyUpdatedElasticEventListener employeeAfterCompanyUpdated =
+                    new EmployeeAfterCompanyUpdatedElasticEventListener(client);
+
+            EmployeeCreatedElasticEventListener employeeCreatedElasticEventListener =
                     new EmployeeCreatedElasticEventListener(client);
-            DomainEventListener<?> employeeUpdatedElasticEventListener =
+
+            EmployeeUpdatedElasticEventListener employeeUpdatedElasticEventListener =
                     new EmployeeUpdatedElasticEventListener(client);
-            DomainEventListener<?> employeeDeletedElasticEventListener =
+
+            EmployeeDeletedElasticEventListener employeeDeletedElasticEventListener =
                     new EmployeeDeletedElasticEventListener(client);
-            DomainEventListener<?> employeeIncrementCompanyTotalEmployeesListener =
+
+            EmployeeCreateIncrementTotalEmployeesListener employeeIncrementCompanyTotalEmployeesListener =
                     new EmployeeCreateIncrementTotalEmployeesListener(client);
-            DomainEventListener<?> employeeDecrementCompanyTotalEmployeesListener =
+
+            EmployeeDeletedDecrementTotalEmployeesListener employeeDecrementCompanyTotalEmployeesListener =
                     new EmployeeDeletedDecrementTotalEmployeesListener(client);
-            DomainEventListener<?> employeeNameAddToCompanyListener =
+
+            IndexAddEmployeeNameToCompanyElasticEventListener employeeNameAddToCompanyListener =
                     new IndexAddEmployeeNameToCompanyElasticEventListener(client);
-            DomainEventListener<?> employeeDeleteNameFromCompanyIndexListener =
+
+            IndexRemoveEmployeeFromCompanyElasticEventListener employeeDeleteNameFromCompanyIndexListener =
                     new IndexRemoveEmployeeFromCompanyElasticEventListener(client);
-            DomainEventListener<?> employeeUpdateNameAtCompanyIndexListener =
+
+            IndexUpdateEmployeeInCompanyElasticEventListener employeeUpdateNameAtCompanyIndexListener =
                     new IndexUpdateEmployeeInCompanyElasticEventListener(client);
+
+            DBCompanyCreatedEventHandler DBCompanyCreatedEventHandler = new DBCompanyCreatedEventHandler(
+                    dbCompanyCreatedEventListener,
+                    companyCreatedLoggingEventListener
+            );
+
+            DBCompanyUpdatedEventHandler DBCompanyUpdatedEventHandler = new DBCompanyUpdatedEventHandler(
+                    dbCompanyUpdatedEventListener,
+                    companyUpdatedLoggingListener
+            );
+
+            DBCompanyDeletedEventHandler DBCompanyDeletedEventHandler = new DBCompanyDeletedEventHandler(
+                    dbCompanyDeletedEventListener,
+                    companyDeletedLoggingEventListener
+            );
+
+            DBEmployeeCreatedEventHandler DBEmployeeCreatedEventHandler = new DBEmployeeCreatedEventHandler(
+                    dbEmployeeCreatedEventListener,
+                    employeeCreatedLoggingEventListener
+            );
+
+            DBEmployeeUpdatedEventHandler DBEmployeeUpdatedEventHandler = new DBEmployeeUpdatedEventHandler(
+                    dbEmployeeUpdatedEventListener,
+                    employeeUpdatedLoggingEventListener
+            );
+
+            DBEmployeeDeletedEventHandler DBEmployeeDeletedEventHandler = new DBEmployeeDeletedEventHandler(
+                    dbEmployeeDeletedEventListener,
+                    employeeDeletedLoggingEventListener
+            );
+
+            ElasticCompanyCreatedEventHandler elasticCompanyCreatedEventHandler = new ElasticCompanyCreatedEventHandler(
+                    companyCreatedElasticEventListener
+            );
+
+            ElasticCompanyUpdatedEventHandler elasticCompanyUpdatedEventHandler = new ElasticCompanyUpdatedEventHandler(
+                    companyUpdatedElasticEventListener,
+                    employeeAfterCompanyUpdated
+
+            );
+
+            ElasticCompanyDeletedEventHandler elasticCompanyDeletedEventHandler = new ElasticCompanyDeletedEventHandler(
+                    companyDeletedElasticEventListener
+            );
+
+            ElasticEmployeeCreatedEventHandler elasticEmployeeCreatedEventHandler = new ElasticEmployeeCreatedEventHandler(
+                    employeeCreatedElasticEventListener,
+                    employeeIncrementCompanyTotalEmployeesListener,
+                    employeeNameAddToCompanyListener
+            );
+
+            ElasticEmployeeUpdatedEventHandler elasticEmployeeUpdatedEventHandler = new ElasticEmployeeUpdatedEventHandler(
+                    employeeUpdatedElasticEventListener,
+                    employeeUpdateNameAtCompanyIndexListener
+            );
+
+            ElasticEmployeeDeletedEventHandler elasticEmployeeDeletedEventHandler = new ElasticEmployeeDeletedEventHandler(
+                    employeeDeletedElasticEventListener,
+                    employeeDecrementCompanyTotalEmployeesListener,
+                    employeeDeleteNameFromCompanyIndexListener
+            );
+
+            Map<Class<? extends DomainEvent>, DomainEventListener<?>> dbHandlers = Map.of(
+                    CompanyCreatedEvent.class, DBCompanyCreatedEventHandler,
+                    CompanyUpdatedEvent.class, DBCompanyUpdatedEventHandler,
+                    CompanyDeletedEvent.class, DBCompanyDeletedEventHandler,
+                    EmployeeCreatedEvent.class, DBEmployeeCreatedEventHandler,
+                    EmployeeUpdatedEvent.class, DBEmployeeUpdatedEventHandler,
+                    EmployeeDeletedEvent.class, DBEmployeeDeletedEventHandler
+            );
+
+            Map<Class<? extends DomainEvent>, DomainEventListener<?>> elasticHandlers = Map.of(
+                    CompanyCreatedEvent.class, elasticCompanyCreatedEventHandler,
+                    CompanyUpdatedEvent.class, elasticCompanyUpdatedEventHandler,
+                    CompanyDeletedEvent.class, elasticCompanyDeletedEventHandler,
+                    EmployeeCreatedEvent.class, elasticEmployeeCreatedEventHandler,
+                    EmployeeUpdatedEvent.class, elasticEmployeeUpdatedEventHandler,
+                    EmployeeDeletedEvent.class, elasticEmployeeDeletedEventHandler
+            );
 
             String bootstrapServers = "localhost:9092";
             String topic = "domain-events";
@@ -204,38 +323,11 @@ public class Application {
             KafkaSender<String, byte[]> sender =
                     KafkaConfig.createProducer(bootstrapServers);
 
-            KafkaReceiver<String, byte[]> receiver =
-                    KafkaConfig.createReceiver(bootstrapServers, topic);
+            KafkaReceiver<String, byte[]> dbReceiver =
+                    KafkaConfig.createReceiver(bootstrapServers, topic, "db-consumer");
 
-//            Channel publisherChannel = RabbitMQConfig.getChannel();
-//            Channel consumerChannel = RabbitMQConfig.getChannel();
-//            String exchange = "domain.events";
-
-            List<DomainEventListener<?>> listeners = List.of(
-                    dbCompanyCreatedEventListener,
-                    companyCreatedLoggingEventListener,
-                    companyCreatedElasticEventListener,
-                    dbCompanyUpdatedEventListener,
-                    companyUpdatedLoggingListener,
-                    companyUpdatedElasticEventListener,
-                    dbCompanyDeletedEventListener,
-                    companyDeletedLoggingEventListener,
-                    companyDeletedElasticEventListener,
-                    dbEmployeeCreatedEventListener,
-                    employeeCreatedLoggingEventListener,
-                    employeeCreatedElasticEventListener,
-                    dbEmployeeUpdatedEventListener,
-                    employeeUpdatedLoggingEventListener,
-                    employeeUpdatedElasticEventListener,
-                    dbEmployeeDeletedEventListener,
-                    employeeDeletedLoggingEventListener,
-                    employeeDeletedElasticEventListener,
-                    employeeIncrementCompanyTotalEmployeesListener,
-                    employeeDecrementCompanyTotalEmployeesListener,
-                    employeeNameAddToCompanyListener,
-                    employeeDeleteNameFromCompanyIndexListener,
-                    employeeUpdateNameAtCompanyIndexListener
-            );
+            KafkaReceiver<String, byte[]> elasticReceiver =
+                    KafkaConfig.createReceiver(bootstrapServers, topic, "elastic-consumer");
 
             Map<String, Deserializer<? extends DomainEvent>> deserializerMap = Map.of(
                     "CompanyCreatedEvent", new JSONCompanyCreatedEventDeserializer(),
@@ -246,30 +338,22 @@ public class Application {
                     "EmployeeDeletedEvent", new JSONEmployeeDeletedEventDeserializer()
             );
 
-            KafkaDomainEventConsumer kafkaConsumer =
-                    new KafkaDomainEventConsumer(receiver, listeners, deserializerMap);
+            KafkaDomainEventConsumer dbConsumer =
+                    new KafkaDomainEventConsumer(
+                            dbReceiver,
+                            dbHandlers,
+                            deserializerMap
+                    );
 
-            kafkaConsumer.startConsuming();
+            KafkaDomainEventConsumer elasticConsumer =
+                    new KafkaDomainEventConsumer(
+                            elasticReceiver,
+                            elasticHandlers,
+                            deserializerMap
+                    );
 
-//            RabbitConsumer companyConsumer = new RabbitConsumer(
-//                    consumerChannel,
-//                    "company.queue",
-//                    listeners,
-//                    deserializerMap,
-//                    exchange,
-//                    new String[]{"CompanyCreatedEvent", "CompanyUpdatedEvent", "CompanyDeletedEvent"}
-//            );
-//
-//            RabbitConsumer employeeConsumer = new RabbitConsumer(
-//                    consumerChannel,
-//                    "employee.queue",
-//                    listeners,
-//                    deserializerMap,
-//                    exchange,
-//                    new String[]{"EmployeeCreatedEvent", "EmployeeUpdatedEvent", "EmployeeDeletedEvent"});
-//
-//            companyConsumer.startConsuming();
-//            employeeConsumer.startConsuming();
+            dbConsumer.startConsuming();
+            elasticConsumer.startConsuming();
 
             Map<Class<? extends DomainEvent>, Serializer<? extends DomainEvent>> serializerMap = Map.of(
                     CompanyCreatedEvent.class, new JSONCompanyCreatedEventSerializer(),
@@ -284,8 +368,6 @@ public class Application {
                     new DomainEventSerializer(serializerMap);
 
             eventPublisher = new KafkaDomainEventPublisher(sender, topic, domainSerializer);
-
-//            eventPublisher = new RabbitDomainEventPublisher(publisherChannel, exchange, domainSerializer);
 
             employeeService = new EmployeeServiceImpl(employeeRepository, companyRepository, eventPublisher);
             companyService = new CompanyServiceImpl(companyRepository, eventPublisher);
@@ -373,8 +455,6 @@ public class Application {
             System.out.println("Running with SQL storage");
         }
 
-
-
         // Serializers/Deserializers
         Serializer<Employee> employeeSerializer = new JSONEmployeeSerializer();
         Serializer<EmployeeQueryModel> employeeQueryModelSerializer = new JSONEmployeeQueryModel();
@@ -417,7 +497,6 @@ public class Application {
                 companyQueryModelPageSerializer,
                 searchRequestDTODeserializer
         );
-
 
         DisposableServer server = HttpServer.create()
                 .host("127.0.0.1")
