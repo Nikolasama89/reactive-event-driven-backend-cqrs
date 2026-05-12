@@ -1,12 +1,14 @@
-package com.itsaur.event;
+package com.itsaur.event.rabbitMQ;
 
+import com.itsaur.event.DomainEvent;
+import com.itsaur.event.EventPublisher;
 import com.itsaur.serializer.Serializer;
 import com.rabbitmq.client.Channel;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 
-public class RabbitDomainEventPublisher implements EventPublisher{
+public class RabbitDomainEventPublisher implements EventPublisher {
     private final Channel channel;
     private final String exchangeName;
     private final Serializer<DomainEvent> serializer;

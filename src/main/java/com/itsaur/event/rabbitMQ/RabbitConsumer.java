@@ -1,5 +1,7 @@
-package com.itsaur.event;
+package com.itsaur.event.rabbitMQ;
 
+import com.itsaur.event.DomainEvent;
+import com.itsaur.event.DomainEventListener;
 import com.itsaur.serializer.*;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DeliverCallback;
