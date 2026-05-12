@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public class KafkaConfig {
+
     public static KafkaSender<String, byte[]> createProducer(String bootstrapServers) {
         Map<String, Object> producerProps = new HashMap<>();
         producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -28,10 +29,10 @@ public class KafkaConfig {
         return KafkaSender.create(senderOptions);
     }
 
-    public static KafkaReceiver<String, byte[]> createReceiver(String bootstrapServers, String topic) {
+    public static KafkaReceiver<String, byte[]> createReceiver(String bootstrapServers, String topic, String groupId) {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "main-app");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
