@@ -5,27 +5,41 @@ import com.itsaur.serializer.Deserializer;
 import org.apache.kafka.common.header.Header;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverRecord;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class KafkaDomainEventConsumer {
-    private final Logger logger = LoggerFactory.getLogger(KafkaDomainEventConsumer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaDomainEventConsumer.class);
     private final KafkaReceiver<String, byte[]> receiver;
-    private final Map<Class<? extends DomainEvent>, DomainEventListener<?>> handlers;
+    private final Map<Class<? extends DomainEvent>, List<DomainEventListener<?>>> listeners;
     private final Map<String, Deserializer<? extends DomainEvent>> deserializers;
 
     public KafkaDomainEventConsumer(
             KafkaReceiver<String, byte[]> receiver,
-            Map<Class<? extends DomainEvent>, DomainEventListener<?>> handlers,
+            List<DomainEventListener<?>> listenerList,
             Map<String, Deserializer<? extends DomainEvent>> deserializers
     ) {
         this.receiver = receiver;
-        this.handlers = handlers;
+        this.listeners = new HashMap<>();
         this.deserializers = deserializers;
+
+        for (DomainEventListener<?> listener : listenerList){
+//            if (!listeners.containsKey(listener.eventType())){
+//                listeners.put((Class<? extends DomainEvent>) listener.eventType(), new ArrayList<>());
+//            }
+            listeners.computeIfAbsent((Class<? extends DomainEvent>) listener.eventType(),
+                            k -> new ArrayList<>())
+                    .add(listener);
+//            listeners.get(listener.eventType()).add(listener);
+        }
     }
 
     public void startConsuming(){
@@ -39,7 +53,7 @@ public class KafkaDomainEventConsumer {
 
         Header header = record.headers().lastHeader("eventType");
         if (header == null){
-            logger.warn("Not known event");
+            LOGGER.warn("Not known event");
             return Mono.empty();
         }
 
@@ -47,19 +61,24 @@ public class KafkaDomainEventConsumer {
 
         Deserializer<? extends DomainEvent> deserializer = deserializers.get(eventType);
         if (deserializer == null) {
-            logger.warn("No deserializer for this event");
+            LOGGER.warn("No deserializer for event: {}", eventType);
             return Mono.empty();
         }
 
         DomainEvent event = deserializer.deserialize(record.value());
 
-        @SuppressWarnings("unchecked")
-        DomainEventListener<DomainEvent> handler = (DomainEventListener<DomainEvent>) handlers.get(event.getClass());
-
-        if (handler == null){
-            logger.warn("No handler for this event");
+        List<DomainEventListener<?>> eventListeners =  listeners.get(event.getClass());
+        if (eventListeners == null){
+            LOGGER.warn("No event listeners for {}", event.getClass().getName());
             return Mono.empty();
         }
-        return handler.handle(event);
+
+        return Flux.fromIterable(eventListeners)
+                .concatMap(l -> {
+                    @SuppressWarnings("unchecked")
+                    DomainEventListener<DomainEvent> listener = (DomainEventListener<DomainEvent>) l;
+                    return listener.handle(event);
+                })
+                .then();
     }
 }
