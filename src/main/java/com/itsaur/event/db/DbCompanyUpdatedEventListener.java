@@ -12,11 +12,11 @@ import reactor.util.retry.Retry;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 
-public class DBCompanyUpdatedEventListener implements DomainEventListener<CompanyUpdatedEvent> {
-    private final Logger logger = LoggerFactory.getLogger(DBCompanyUpdatedEventListener.class);
+public class DbCompanyUpdatedEventListener implements DomainEventListener<CompanyUpdatedEvent> {
+    private final Logger logger = LoggerFactory.getLogger(DbCompanyUpdatedEventListener.class);
     private final CompanyRepository companyRepository;
 
-    public DBCompanyUpdatedEventListener(CompanyRepository companyRepository) {
+    public DbCompanyUpdatedEventListener(CompanyRepository companyRepository) {
         this.companyRepository = companyRepository;
     }
 
