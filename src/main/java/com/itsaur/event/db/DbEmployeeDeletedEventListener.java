@@ -10,12 +10,12 @@ import reactor.util.retry.Retry;
 
 import java.time.Duration;
 
-public class DBEmployeeDeletedEventListener implements DomainEventListener<EmployeeDeletedEvent> {
+public class DbEmployeeDeletedEventListener implements DomainEventListener<EmployeeDeletedEvent> {
 
-    private final Logger logger = LoggerFactory.getLogger(DBEmployeeDeletedEventListener.class);
+    private final Logger logger = LoggerFactory.getLogger(DbEmployeeDeletedEventListener.class);
     private final EmployeeRepository employeeRepository;
 
-    public DBEmployeeDeletedEventListener(EmployeeRepository employeeRepository) {
+    public DbEmployeeDeletedEventListener(EmployeeRepository employeeRepository) {
         this.employeeRepository = employeeRepository;
     }
 

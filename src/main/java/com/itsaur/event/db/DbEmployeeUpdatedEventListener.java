@@ -1,7 +1,7 @@
 package com.itsaur.event.db;
 
 import com.itsaur.event.DomainEventListener;
-import com.itsaur.event.EmployeeCreatedEvent;
+import com.itsaur.event.EmployeeUpdatedEvent;
 import com.itsaur.model.Employee;
 import com.itsaur.repository.EmployeeRepository;
 import org.slf4j.Logger;
@@ -12,35 +12,35 @@ import reactor.util.retry.Retry;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 
-public class DBEmployeeCreatedEventListener implements DomainEventListener<EmployeeCreatedEvent> {
+public class DbEmployeeUpdatedEventListener implements DomainEventListener<EmployeeUpdatedEvent> {
 
-    private final Logger logger = LoggerFactory.getLogger(DBEmployeeCreatedEventListener.class);
+    private final Logger logger = LoggerFactory.getLogger(DbEmployeeUpdatedEventListener.class);
     private final EmployeeRepository employeeRepository;
 
-    public DBEmployeeCreatedEventListener(EmployeeRepository employeeRepository) {
+    public DbEmployeeUpdatedEventListener(EmployeeRepository employeeRepository) {
         this.employeeRepository = employeeRepository;
     }
 
     @Override
-    public Class<EmployeeCreatedEvent> eventType() {
-        return EmployeeCreatedEvent.class;
+    public Class<EmployeeUpdatedEvent> eventType() {
+        return EmployeeUpdatedEvent.class;
     }
 
     @Override
-    public Mono<Void> handle(EmployeeCreatedEvent event) {
+    public Mono<Void> handle(EmployeeUpdatedEvent event) {
         Employee employee = Employee.construct(
                 event.getEmployeeId().getValue(),
                 event.getFullName().getFirstname(),
                 event.getFullName().getLastname(),
                 event.getEmail().getValue(),
                 event.getCompanyId().getValue(),
-                OffsetDateTime.now(),
+                event.getOccurredAt(),
                 OffsetDateTime.now()
         );
-        return employeeRepository.createOrUpdateEmployee(null, employee)
+        return employeeRepository.createOrUpdateEmployee(event.getEmployeeId().getValue(), employee)
                 .retryWhen(Retry.backoff(3, Duration.ofSeconds(1))
                         .maxBackoff(Duration.ofSeconds(3)))
-                .doOnSuccess(saved -> logger.info("Employee with id: {} created", event.getEmployeeId().getValue()))
+                .doOnSuccess(saved -> logger.info("Employee with id: {} updated", event.getEmployeeId().getValue()))
                 .then();
     }
 }

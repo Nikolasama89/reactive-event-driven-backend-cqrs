@@ -11,11 +11,11 @@ import reactor.util.retry.Retry;
 
 import java.time.Duration;
 
-public class DBCompanyCreatedEventListener implements DomainEventListener<CompanyCreatedEvent> {
-    private final Logger logger = LoggerFactory.getLogger(DBCompanyCreatedEventListener.class);
+public class DbCompanyCreatedEventListener implements DomainEventListener<CompanyCreatedEvent> {
+    private final Logger logger = LoggerFactory.getLogger(DbCompanyCreatedEventListener.class);
     private final CompanyRepository companyRepository;
 
-    public DBCompanyCreatedEventListener(CompanyRepository companyRepository) {
+    public DbCompanyCreatedEventListener(CompanyRepository companyRepository) {
         this.companyRepository = companyRepository;
     }
 

@@ -14,11 +14,11 @@ import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
 
-public class DBEmployeeQueryRepository implements EmployeeQueryRepository {
+public class DbEmployeeQueryRepository implements EmployeeQueryRepository {
 
     private final ConnectionFactory cf;
 
-    public DBEmployeeQueryRepository(ConnectionFactory cf) {
+    public DbEmployeeQueryRepository(ConnectionFactory cf) {
         this.cf = cf;
     }
 
