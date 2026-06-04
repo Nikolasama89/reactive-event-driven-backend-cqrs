@@ -8,7 +8,7 @@ import com.itsaur.elastic.repository.ElasticEmployeeQueryRepository;
 import com.itsaur.elastic.service.ElasticCompanyQueryServiceImpl;
 import com.itsaur.elastic.service.ElasticEmployeeQueryServiceImpl;
 import com.itsaur.event.*;
-import com.itsaur.event.db.*;
+//import com.itsaur.event.db.*;
 import com.itsaur.event.kafka.*;
 import com.itsaur.event.logging.*;
 import com.itsaur.event.rabbitMQ.RabbitConsumer;
@@ -16,12 +16,17 @@ import com.itsaur.event.rabbitMQ.RabbitDomainEventPublisher;
 import com.itsaur.handler.CompanyHandler;
 import com.itsaur.handler.EmployeeHandler;
 import com.itsaur.inMemory.repository.InMemoryCompanyQueryRepository;
+//import com.itsaur.inMemory.repository.InMemoryCompanyRepository;
 import com.itsaur.inMemory.repository.InMemoryCompanyRepository;
 import com.itsaur.inMemory.repository.InMemoryEmployeeQueryRepository;
 import com.itsaur.inMemory.repository.InMemoryEmployeeRepository;
 import com.itsaur.inMemory.search.InMemoryCompanySearch;
 import com.itsaur.inMemory.search.InMemoryEmployeeSearch;
 import com.itsaur.inMemory.search.InMemoryStorage;
+import com.itsaur.kafkaStreams.CompanyTopologyBuilder;
+import com.itsaur.kafkaStreams.EmployeeTopologyBuilder;
+import com.itsaur.kafkaStreams.StreamCompanyRepository;
+import com.itsaur.kafkaStreams.StreamEmployeeRepository;
 import com.itsaur.model.Company;
 import com.itsaur.model.CompanyQueryModel;
 import com.itsaur.model.Employee;
@@ -42,13 +47,18 @@ import com.itsaur.util.KafkaConfig;
 import com.itsaur.util.RabbitMQConfig;
 import com.rabbitmq.client.Channel;
 import io.r2dbc.spi.ConnectionFactory;
-import reactor.kafka.receiver.KafkaReceiver;
+import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 import reactor.kafka.sender.KafkaSender;
 import reactor.netty.DisposableServer;
 import reactor.netty.http.server.HttpServer;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 
 public class Application {
@@ -152,10 +162,45 @@ public class Application {
         } else if (storageType.equalsIgnoreCase("elastic")){
 
             ElasticsearchAsyncClient client = ElasticSearchConfig.getClient();
-            ConnectionFactory connectionFactory = DbConnector.getPool();
+//            ConnectionFactory connectionFactory = DbConnector.getPool();
 
-            employeeRepository = new DbEmployeeRepository(connectionFactory);
-            companyRepository = new DbCompanyRepository(connectionFactory);
+            String bootstrapServers = "localhost:9092";
+
+            Properties companyProps = new Properties();
+            companyProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "company-streams-app");
+            companyProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+            companyProps.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_V2);
+            companyProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, 1);
+
+            Properties employeeProps = new Properties();
+            employeeProps.put(StreamsConfig.APPLICATION_ID_CONFIG, "employee-streams-app");
+            employeeProps.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+            employeeProps.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_V2);
+            employeeProps.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, 1);
+
+            Serde<DomainEvent> eventSerde = Serdes.serdeFrom(
+                    new StreamDomainEventSerializer(), new StreamDomainEventDeserializer());
+            Serde<Company> companySerde = Serdes.serdeFrom(
+                    new StreamCompanySerializer(), new StreamCompanyDeserializer());
+            Serde<Employee> employeeSerde = Serdes.serdeFrom(
+                    new StreamEmployeeSerializer(), new StreamEmployeeDeserializer()
+            );
+
+            System.out.println(eventSerde.deserializer().getClass());
+
+            Topology companyTopology = new CompanyTopologyBuilder(eventSerde, companySerde).build();
+            Topology employeeTopology = new EmployeeTopologyBuilder(eventSerde, employeeSerde).build();
+
+            KafkaStreams companyStreams = new KafkaStreams(companyTopology, companyProps);
+            KafkaStreams employeeStreams = new KafkaStreams(employeeTopology, employeeProps);
+            companyStreams.start();
+            employeeStreams.start();
+            Runtime.getRuntime().addShutdownHook(new Thread(companyStreams::close));
+            Runtime.getRuntime().addShutdownHook(new Thread(employeeStreams::close));
+
+
+            employeeRepository = new StreamEmployeeRepository(employeeStreams);
+            companyRepository = new StreamCompanyRepository(companyStreams);
 
             ElasticSearchCompanyQueryBuilder companyQueryBuilder = new ElasticSearchCompanyQueryBuilder();
             ElasticSearchEmployeeQueryBuilder employeeQueryBuilder = new ElasticSearchEmployeeQueryBuilder();
@@ -167,23 +212,23 @@ public class Application {
                     new ElasticCompanyQueryRepository(client, companyQueryBuilder);
 
 
-            DomainEventListener<CompanyCreatedEvent> dbCompanyCreatedEventListener =
-                    new DbCompanyCreatedEventListener(companyRepository);
+//            DomainEventListener<CompanyCreatedEvent> dbCompanyCreatedEventListener =
+//                    new DbCompanyCreatedEventListener(companyReadRepository);
 
-            DomainEventListener<CompanyUpdatedEvent> dbCompanyUpdatedEventListener =
-                    new DbCompanyUpdatedEventListener(companyRepository);
+//            DomainEventListener<CompanyUpdatedEvent> dbCompanyUpdatedEventListener =
+//                    new DbCompanyUpdatedEventListener(companyReadRepository);
 
-            DomainEventListener<CompanyDeletedEvent> dbCompanyDeletedEventListener =
-                    new DbCompanyDeletedEventListener(companyRepository);
+//            DomainEventListener<CompanyDeletedEvent> dbCompanyDeletedEventListener =
+//                    new DbCompanyDeletedEventListener(companyReadRepository);
 
-            DomainEventListener<EmployeeCreatedEvent> dbEmployeeCreatedEventListener =
-                    new DbEmployeeCreatedEventListener(employeeRepository);
+//            DomainEventListener<EmployeeCreatedEvent> dbEmployeeCreatedEventListener =
+//                    new DbEmployeeCreatedEventListener(employeeRepository);
 
-            DomainEventListener<EmployeeUpdatedEvent> dbEmployeeUpdatedEventListener =
-                    new DbEmployeeUpdatedEventListener(employeeRepository);
+//            DomainEventListener<EmployeeUpdatedEvent> dbEmployeeUpdatedEventListener =
+//                    new DbEmployeeUpdatedEventListener(employeeRepository);
 
-            DomainEventListener<EmployeeDeletedEvent> dbEmployeeDeletedEventListener =
-                    new DbEmployeeDeletedEventListener(employeeRepository);
+//            DomainEventListener<EmployeeDeletedEvent> dbEmployeeDeletedEventListener =
+//                    new DbEmployeeDeletedEventListener(employeeRepository);
 
             DomainEventListener<CompanyCreatedEvent> companyCreatedElasticEventListener =
                     new CompanyCreatedElasticEventListener(client);
@@ -223,12 +268,12 @@ public class Application {
 
 
             List<DomainEventListener<?>> dbListeners = List.of(
-                    dbCompanyCreatedEventListener,
-                    dbCompanyUpdatedEventListener,
-                    dbCompanyDeletedEventListener,
-                    dbEmployeeCreatedEventListener,
-                    dbEmployeeUpdatedEventListener,
-                    dbEmployeeDeletedEventListener
+//                    dbCompanyCreatedEventListener,
+//                    dbCompanyUpdatedEventListener,
+//                    dbCompanyDeletedEventListener,
+//                    dbEmployeeCreatedEventListener,
+//                    dbEmployeeUpdatedEventListener,
+//                    dbEmployeeDeletedEventListener
             );
 
             List<DomainEventListener<?>> elasticListeners = List.of(
@@ -246,36 +291,36 @@ public class Application {
                     employeeDeleteNameFromCompanyIndexListener
             );
 
-            String bootstrapServers = "localhost:9092";
+
             String topic = "domain-events";
 
             KafkaSender<String, byte[]> sender =
                     KafkaConfig.createProducer(bootstrapServers);
 
-            KafkaReceiver<String, byte[]> dbReceiver =
-                    KafkaConfig.createReceiver(bootstrapServers, topic, "db-consumer");
+//            KafkaReceiver<String, byte[]> dbReceiver =
+//                    KafkaConfig.createReceiver(bootstrapServers, topic, "db-consumer");
+//
+//            KafkaReceiver<String, byte[]> elasticReceiver =
+//                    KafkaConfig.createReceiver(bootstrapServers, topic, "elastic-consumer");
 
-            KafkaReceiver<String, byte[]> elasticReceiver =
-                    KafkaConfig.createReceiver(bootstrapServers, topic, "elastic-consumer");
 
 
+//            KafkaDomainEventConsumer dbConsumer =
+//                    new KafkaDomainEventConsumer(
+//                            dbReceiver,
+//                            dbListeners,
+//                            deserializerMap
+//                    );
+//
+//            KafkaDomainEventConsumer elasticConsumer =
+//                    new KafkaDomainEventConsumer(
+//                            elasticReceiver,
+//                            elasticListeners,
+//                            deserializerMap
+//                    );
 
-            KafkaDomainEventConsumer dbConsumer =
-                    new KafkaDomainEventConsumer(
-                            dbReceiver,
-                            dbListeners,
-                            deserializerMap
-                    );
-
-            KafkaDomainEventConsumer elasticConsumer =
-                    new KafkaDomainEventConsumer(
-                            elasticReceiver,
-                            elasticListeners,
-                            deserializerMap
-                    );
-
-            dbConsumer.startConsuming();
-            elasticConsumer.startConsuming();
+//            dbConsumer.startConsuming();
+//            elasticConsumer.startConsuming();
 
 
             Serializer<DomainEvent> domainSerializer =
