@@ -42,7 +42,7 @@ public class CompanyTopologyBuilder {
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(companySerde));
         companiesTable
-                .groupBy((id, employee) -> KeyValue.pair(employee.getVat().getValue(), id),
+                .groupBy((id, company) -> KeyValue.pair(company.getVat().getValue(), id),
                         Grouped.with(Serdes.String(), Serdes.String()))
                 .aggregate(() -> null,
                         (vat, currentId, aggregate) -> currentId,
