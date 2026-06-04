@@ -31,7 +31,6 @@ public class DbCompanyRepository implements CompanyRepository {
                 .flatMap(result -> Mono.from(result.map((row, meta) -> map(row))));
     }
 
-    @Override
     public Mono<Company> createOrUpdateCompany(Long id, Company company) {
         if (id == null) {
             String sql =
@@ -64,7 +63,6 @@ public class DbCompanyRepository implements CompanyRepository {
         }
     }
 
-    @Override
     public Mono<Void> deleteCompany(Long id) {
         String sql = "DELETE FROM companies WHERE id = $1";
         return Mono.usingWhen(cf.create(), conn -> Mono.from(conn.createStatement(sql)
