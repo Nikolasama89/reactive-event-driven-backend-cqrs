@@ -10,29 +10,26 @@ import reactor.core.publisher.Mono;
 
 
 public class CompanyServiceImpl implements CompanyService {
-
     private final CompanyRepository companyRepository;
     private final EventPublisher eventPublisher;
 
     public CompanyServiceImpl(CompanyRepository companyRepository, EventPublisher eventPublisher) {
         this.companyRepository = companyRepository;
         this.eventPublisher = eventPublisher;
-
     }
 
     @Override
     public Mono<Company> findCompanyById(Long id) {
-        if (id == null || id <= 0 ){
+        if (id == null || id <= 0) {
             return Mono.error(new EntityInvalidArgumentException("Id can not be null or empty"));
         }
         return companyRepository.getCompanyById(id)
-                .switchIfEmpty(Mono.error(new CompanyNotFoundException("Company with id: " +  id + " not found.")));
+                .switchIfEmpty(Mono.error(new CompanyNotFoundException("Company with id: " + id + " not found.")));
     }
 
     @Override
     public Mono<Company> save(CompanyCreateDTO companyCreateDTO) {
-
-        if (companyCreateDTO.getVat() == null){
+        if (companyCreateDTO.getVat() == null) {
             return Mono.error(new EntityInvalidArgumentException("Company VAT cannot be null"));
         }
         return companyRepository.existsVat(companyCreateDTO.getVat())
@@ -40,13 +37,14 @@ public class CompanyServiceImpl implements CompanyService {
                     if (exists) {
                         return Mono.error(new CompanyVatAlreadyExistsException("VAT already exists."));
                     }
-
+                    // NOTE: best-effort uniqueness check. Race condition possible μεταξύ
+                    // existsVat read και publish, αφού το state store ενημερώνεται
+                    // ασύγχρονα από το events topic.
                     Company company = Company.create(
                             companyCreateDTO.getCompanyName(),
                             companyCreateDTO.getVat(),
                             companyCreateDTO.getAddress()
                     );
-
                     CompanyCreatedEvent event = new CompanyCreatedEvent(
                             company.getId(),
                             company.getCompanyName(),
@@ -60,22 +58,20 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public Mono<Void> update(Long id, CompanyUpdateDTO companyUpdateDTO) {
-
         if (id == null || id <= 0) {
             return Mono.error(new EntityInvalidArgumentException("Id must be greater than zero"));
         }
-        if (companyUpdateDTO.getVat() == null){
+        if (companyUpdateDTO.getVat() == null) {
             return Mono.error(new EntityInvalidArgumentException("Company VAT cannot be null"));
         }
         return companyRepository.getCompanyById(id)
                 .switchIfEmpty(Mono.error(new CompanyNotFoundException("Company with id: " + id + " not found")))
                 .flatMap(existing -> {
-
                     Company updated = existing.update(
                             companyUpdateDTO.getCompanyName(),
                             companyUpdateDTO.getVat(),
-                            companyUpdateDTO.getAddress());
-
+                            companyUpdateDTO.getAddress()
+                    );
                     CompanyUpdatedEvent event = new CompanyUpdatedEvent(
                             updated.getId(),
                             updated.getCompanyName(),
@@ -89,11 +85,12 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public Mono<Void> delete(Long id) {
-        if (id == null || id <= 0){
+        if (id == null || id <= 0) {
             return Mono.error(new EntityInvalidArgumentException("Id must be greater than zero"));
         }
         return companyRepository.getCompanyById(id)
                 .switchIfEmpty(Mono.error(new CompanyNotFoundException("Company with id: " + id + " not found.")))
-                .flatMap(company -> eventPublisher.publish(new CompanyDeletedEvent(CompanyId.create(id)))).then();
+                .flatMap(company -> eventPublisher.publish(new CompanyDeletedEvent(CompanyId.create(id))))
+                .then();
     }
 }
