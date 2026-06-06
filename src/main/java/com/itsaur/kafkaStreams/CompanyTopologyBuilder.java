@@ -1,18 +1,11 @@
 package com.itsaur.kafkaStreams;
 
-import com.itsaur.event.CompanyCreatedEvent;
-import com.itsaur.event.CompanyDeletedEvent;
-import com.itsaur.event.CompanyUpdatedEvent;
 import com.itsaur.event.DomainEvent;
 import com.itsaur.model.Company;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.utils.Bytes;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.Stores;
 
 public class CompanyTopologyBuilder {
 
@@ -30,57 +23,38 @@ public class CompanyTopologyBuilder {
 
     public Topology build() {
 
-        StreamsBuilder builder = new StreamsBuilder();
+        Topology topology = new Topology();
 
-        KStream<String, DomainEvent> eventStream = builder
-                .stream(EVENTS_TOPIC, Consumed.with(Serdes.String(), eventSerde));
+        topology.addSource(
+                "CompanyEventSource",
+                Serdes.String().deserializer(),
+                eventSerde.deserializer(),
+                EVENTS_TOPIC
+        );
 
-        KTable<String, Company> companiesTable = eventStream.groupByKey(Grouped.with(Serdes.String(), eventSerde))
-                .aggregate(() -> null, (id, event, current) ->
-                                applyEvent(current, event),
-                        Materialized.<String, Company, KeyValueStore<Bytes, byte[]>>as(COMPANIES_STORE)
-                                .withKeySerde(Serdes.String())
-                                .withValueSerde(companySerde));
-        companiesTable
-                .groupBy((id, company) -> KeyValue.pair(company.getVat().getValue(), id),
-                        Grouped.with(Serdes.String(), Serdes.String()))
-                .aggregate(() -> null,
-                        (vat, currentId, aggregate) -> currentId,
-                        (vat, oldId, aggregate) -> null,
-                        Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(VAT_COMPANIES_STORE)
-                                .withKeySerde(Serdes.String())
-                                .withValueSerde(Serdes.String()));
-        return builder.build();
-    }
+        topology.addProcessor(
+                "CompanyProcessorNode",
+                CompanyProcessor::new,
+                "CompanyEventSource"
+        );
 
-    private Company applyEvent(Company current, DomainEvent event) {
-        if (event instanceof CompanyCreatedEvent e) {
-            if (current != null) {
-                return current;
-            }
-            return Company.construct(
-                    e.getCompanyId().getValue(),
-                    e.getCompanyName().getValue(),
-                    e.getVat().getValue(),
-                    e.getAddress().getValue(),
-                    e.getOccurredAt(),
-                    e.getOccurredAt()
-            );
-        }
-        if (event instanceof CompanyUpdatedEvent e) {
+        topology.addStateStore(
+                Stores.keyValueStoreBuilder(
+                        Stores.persistentKeyValueStore(COMPANIES_STORE),
+                        Serdes.String(),
+                        companySerde
+                ),
+                "CompanyProcessorNode"
+        );
 
-            if (current == null) {
-                return null;
-            }
-            return current.update(
-                    e.getCompanyName().getValue(),
-                    e.getVat().getValue(),
-                    e.getAddress().getValue()
-            );
-        }
-        if (event instanceof CompanyDeletedEvent) {
-            return null;
-        }
-        return current;
+        topology.addStateStore(
+                Stores.keyValueStoreBuilder(
+                        Stores.persistentKeyValueStore(VAT_COMPANIES_STORE),
+                        Serdes.String(),
+                        Serdes.String()
+                ),
+                "CompanyProcessorNode"
+        );
+        return topology;
     }
 }
