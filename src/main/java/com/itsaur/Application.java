@@ -52,6 +52,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
+import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.sender.KafkaSender;
 import reactor.netty.DisposableServer;
 import reactor.netty.http.server.HttpServer;
@@ -300,8 +301,8 @@ public class Application {
 //            KafkaReceiver<String, byte[]> dbReceiver =
 //                    KafkaConfig.createReceiver(bootstrapServers, topic, "db-consumer");
 //
-//            KafkaReceiver<String, byte[]> elasticReceiver =
-//                    KafkaConfig.createReceiver(bootstrapServers, topic, "elastic-consumer");
+            KafkaReceiver<String, byte[]> elasticReceiver =
+                    KafkaConfig.createReceiver(bootstrapServers, topic, "elastic-consumer");
 
 
 
@@ -312,15 +313,15 @@ public class Application {
 //                            deserializerMap
 //                    );
 //
-//            KafkaDomainEventConsumer elasticConsumer =
-//                    new KafkaDomainEventConsumer(
-//                            elasticReceiver,
-//                            elasticListeners,
-//                            deserializerMap
-//                    );
+            KafkaDomainEventConsumer elasticConsumer =
+                    new KafkaDomainEventConsumer(
+                            elasticReceiver,
+                            elasticListeners,
+                            deserializerMap
+                    );
 
 //            dbConsumer.startConsuming();
-//            elasticConsumer.startConsuming();
+            elasticConsumer.startConsuming();
 
 
             Serializer<DomainEvent> domainSerializer =
