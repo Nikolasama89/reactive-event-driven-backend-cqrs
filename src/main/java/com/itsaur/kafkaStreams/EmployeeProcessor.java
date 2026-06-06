@@ -4,7 +4,6 @@ import com.itsaur.event.DomainEvent;
 import com.itsaur.event.EmployeeCreatedEvent;
 import com.itsaur.event.EmployeeDeletedEvent;
 import com.itsaur.event.EmployeeUpdatedEvent;
-import com.itsaur.model.Company;
 import com.itsaur.model.Employee;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
