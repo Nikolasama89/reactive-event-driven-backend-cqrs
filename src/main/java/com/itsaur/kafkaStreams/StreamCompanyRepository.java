@@ -29,11 +29,17 @@ public class StreamCompanyRepository implements CompanyRepository {
     }
 
     private ReadOnlyKeyValueStore<String, Company> companiesStore(){
+        if (kafkaStreams.state() != KafkaStreams.State.RUNNING){
+            throw new IllegalStateException("Streams not running, current state: " + kafkaStreams.state());
+        }
         return kafkaStreams.store(StoreQueryParameters.fromNameAndType(
                 CompanyTopologyBuilder.COMPANIES_STORE, QueryableStoreTypes.keyValueStore()));
     }
 
     private ReadOnlyKeyValueStore<String, String> vatIndexStore(){
+        if (kafkaStreams.state() != KafkaStreams.State.RUNNING) {
+            throw new IllegalStateException("Streams not running, current state: " + kafkaStreams.state());
+        }
         return kafkaStreams.store(StoreQueryParameters.fromNameAndType(
                 CompanyTopologyBuilder.VAT_COMPANIES_STORE, QueryableStoreTypes.keyValueStore()));
     }
