@@ -12,8 +12,8 @@ import org.apache.kafka.streams.state.KeyValueStore;
 
 public class EmployeeProcessor implements Processor<String, DomainEvent, Void, Void> {
 
-    KeyValueStore<String, Employee> employeesStore;
-    KeyValueStore<String, String> emailEmployeesStore;
+    private KeyValueStore<String, Employee> employeesStore;
+    private KeyValueStore<String, String> emailEmployeesStore;
 
     @Override
     public void init(ProcessorContext<Void, Void> context) {
@@ -39,7 +39,9 @@ public class EmployeeProcessor implements Processor<String, DomainEvent, Void, V
 
         if (event instanceof EmployeeCreatedEvent e){
             emailEmployeesStore.put(e.getEmail().getValue(), employeeId);
-        } else if (event instanceof EmployeeDeletedEvent){
+        }
+
+        if (event instanceof EmployeeDeletedEvent && currentEmployee != null){
             emailEmployeesStore.delete(currentEmployee.getEmail().getValue());
         }
 
@@ -77,7 +79,5 @@ public class EmployeeProcessor implements Processor<String, DomainEvent, Void, V
     }
 
     @Override
-    public void close() {
-        Processor.super.close();
-    }
+    public void close() {}
 }

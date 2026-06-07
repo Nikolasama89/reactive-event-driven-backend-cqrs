@@ -12,8 +12,8 @@ import org.apache.kafka.streams.state.KeyValueStore;
 
 public class CompanyProcessor implements Processor<String, DomainEvent, Void, Void> {
 
-    KeyValueStore<String, Company> companiesStore;
-    KeyValueStore<String, String> vatCompaniesStore;
+    private KeyValueStore<String, Company> companiesStore;
+    private KeyValueStore<String, String> vatCompaniesStore;
 
     @Override
     public void init(ProcessorContext<Void, Void> context) {
@@ -43,7 +43,9 @@ public class CompanyProcessor implements Processor<String, DomainEvent, Void, Vo
 
         if (oldVat != null && !oldVat.equals(newVat)){
             vatCompaniesStore.delete(oldVat);
-        } else {
+        }
+
+        if (newVat != null){
             vatCompaniesStore.put(newVat, companyId);
         }
     }
