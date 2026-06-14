@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 import java.time.OffsetDateTime;
 
 
-public class DbEmployeeRepository implements EmployeeRepository {
+public class DbEmployeeRepository implements EmployeeRepository, EmployeeWriteRepository {
 
     private final ConnectionFactory cf;
 
@@ -70,7 +70,7 @@ public class DbEmployeeRepository implements EmployeeRepository {
             );
         }
     }
-    
+
     public Mono<Void> deleteEmployee(Long id) {
         String sql = "delete from employees where id = $1";
         return Mono.usingWhen(cf.create(), conn -> Mono.from(conn.createStatement(sql)
