@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 import java.time.OffsetDateTime;
 
 
-public class DbEmployeeRepository implements EmployeeRepository, EmployeeWriteRepository {
+public class DbEmployeeRepository implements EmployeeRepository {
 
     private final ConnectionFactory cf;
 
