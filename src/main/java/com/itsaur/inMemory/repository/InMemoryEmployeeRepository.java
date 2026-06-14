@@ -28,12 +28,9 @@ public class InMemoryEmployeeRepository implements EmployeeRepository {
         return Mono.justOrEmpty(inMemoryStorage.getEmployees().get(id))
                 .map(existing -> {
 
-                    Employee updated = Employee.create(
+                    Employee updated = existing.update(
                             employee.getFullName().getFirstname(),
-                            employee.getFullName().getLastname(),
-                            existing.getEmail().getValue(),
-                            existing.getCompanyId().getValue());
-
+                            employee.getFullName().getLastname());
                     inMemoryStorage.getEmployees().put(id, updated);
                     return updated;
                 });

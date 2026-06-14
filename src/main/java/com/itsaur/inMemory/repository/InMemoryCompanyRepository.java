@@ -29,10 +29,10 @@ public class InMemoryCompanyRepository implements CompanyRepository {
         }
         return Mono.justOrEmpty(inMemoryStorage.getCompanies().get(id))
                 .map(existing -> {
-                    Company updated = Company.create(
-                            existing.getCompanyName().getValue(),
-                            existing.getVat().getValue(),
-                            existing.getAddress().getValue());
+                    Company updated = existing.update(
+                            company.getCompanyName().getValue(),
+                            company.getVat().getValue(),
+                            company.getAddress().getValue());
 
                     inMemoryStorage.getCompanies().put(id, updated);
                     return updated;
