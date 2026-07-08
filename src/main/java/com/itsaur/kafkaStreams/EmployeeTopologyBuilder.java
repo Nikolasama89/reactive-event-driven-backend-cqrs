@@ -4,7 +4,9 @@ import com.itsaur.event.*;
 import com.itsaur.model.Employee;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.state.Stores;
 
 
@@ -22,38 +24,29 @@ public class EmployeeTopologyBuilder {
     }
 
     public Topology build(){
-        Topology topology = new Topology();
 
-        topology.addSource(
-                "EmployeeEventSource",
-                Serdes.String().deserializer(),
-                eventSerde.deserializer(),
-                EVENTS_TOPIC
-        );
+        StreamsBuilder builder = new StreamsBuilder();
 
-        topology.addProcessor(
-                "EmployeeProcessorNode",
-                EmployeeProcessor::new,
-                "EmployeeEventSource"
-        );
-
-        topology.addStateStore(
+        builder.addStateStore(
                 Stores.keyValueStoreBuilder(
                         Stores.persistentKeyValueStore(EMPLOYEES_STORE),
                         Serdes.String(),
                         employeeSerde
-                ),
-                "EmployeeProcessorNode"
+                )
         );
 
-        topology.addStateStore(
+        builder.addStateStore(
                 Stores.keyValueStoreBuilder(
                         Stores.persistentKeyValueStore(EMAIL_EMPLOYEES_STORE),
                         Serdes.String(),
                         Serdes.String()
-                ),
-                "EmployeeProcessorNode"
+                )
         );
-        return topology;
+
+        builder.stream(EVENTS_TOPIC, Consumed.with(Serdes.String(), eventSerde))
+                .filter((key, event) -> event != null && event.getClass().getSimpleName().contains("Employee"))
+                .process(EmployeeProcessor::new, EMPLOYEES_STORE, EMAIL_EMPLOYEES_STORE);
+
+        return builder.build();
     }
 }

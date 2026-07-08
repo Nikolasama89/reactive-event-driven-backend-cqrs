@@ -29,22 +29,22 @@ public class EmployeeProcessor implements Processor<String, DomainEvent, Void, V
         if (employeeId == null || event == null) return;
 
         Employee currentEmployee = employeesStore.get(employeeId);
-        Employee updatedEmployee = applyEvent(currentEmployee, event);
 
-        if (updatedEmployee == null){
+        Employee nextStateEmployee = applyEvent(currentEmployee, event);
+
+        if (nextStateEmployee == null){
             employeesStore.delete(employeeId);
         } else {
-            employeesStore.put(employeeId, updatedEmployee);
+            employeesStore.put(employeeId, nextStateEmployee);
         }
 
         if (event instanceof EmployeeCreatedEvent e){
             emailEmployeesStore.put(e.getEmail().getValue(), employeeId);
         }
 
-        if (event instanceof EmployeeDeletedEvent && currentEmployee != null){
+        if (event instanceof EmployeeDeletedEvent && currentEmployee != null) {
             emailEmployeesStore.delete(currentEmployee.getEmail().getValue());
         }
-
     }
 
     private Employee applyEvent(Employee current, DomainEvent event) {

@@ -25,8 +25,8 @@ public class StreamEmployeeRepository implements EmployeeRepository {
 
     @Override
     public Mono<Boolean> existsEmail(String email) {
-        return Mono.fromCallable(() -> employeeEmailStore().get(email))
-                .subscribeOn(Schedulers.boundedElastic()).hasElement();
+        return Mono.fromCallable(() -> employeeEmailStore().get(email) != null)
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
     private ReadOnlyKeyValueStore<String, Employee> employeeStore(){

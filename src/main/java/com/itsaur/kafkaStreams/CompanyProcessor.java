@@ -23,6 +23,7 @@ public class CompanyProcessor implements Processor<String, DomainEvent, Void, Vo
 
     @Override
     public void process(Record<String, DomainEvent> record) {
+
         String companyId = record.key();
         DomainEvent event = record.value();
 
@@ -31,30 +32,28 @@ public class CompanyProcessor implements Processor<String, DomainEvent, Void, Vo
         Company currentCompany = companiesStore.get(companyId);
         String oldVat = (currentCompany != null) ? currentCompany.getVat().getValue() : null;
 
-        Company updatedCompany = applyEvent(currentCompany, event);
+        Company nextStateCompany = applyEvent(currentCompany, event);
 
-        if (updatedCompany == null){
+        if (nextStateCompany == null){
             companiesStore.delete(companyId);
         } else {
-            companiesStore.put(companyId, updatedCompany);
+            companiesStore.put(companyId, nextStateCompany);
         }
 
-        String newVat = (updatedCompany != null) ? updatedCompany.getVat().getValue() : null;
+        String newVat = (nextStateCompany != null) ? nextStateCompany.getVat().getValue() : null;
 
-        if (oldVat != null && !oldVat.equals(newVat)){
+        if (oldVat != null && !oldVat.equals(newVat)) {
             vatCompaniesStore.delete(oldVat);
         }
 
-        if (newVat != null){
+        if (newVat != null) {
             vatCompaniesStore.put(newVat, companyId);
         }
     }
 
     private Company applyEvent(Company current, DomainEvent event) {
         if (event instanceof CompanyCreatedEvent e) {
-            if (current != null) {
-                return current;
-            }
+            if (current != null) return current;
             return Company.construct(
                     e.getCompanyId().getValue(),
                     e.getCompanyName().getValue(),
@@ -65,10 +64,7 @@ public class CompanyProcessor implements Processor<String, DomainEvent, Void, Vo
             );
         }
         if (event instanceof CompanyUpdatedEvent e) {
-
-            if (current == null) {
-                return null;
-            }
+            if (current == null) return null;
             return current.update(
                     e.getCompanyName().getValue(),
                     e.getVat().getValue(),

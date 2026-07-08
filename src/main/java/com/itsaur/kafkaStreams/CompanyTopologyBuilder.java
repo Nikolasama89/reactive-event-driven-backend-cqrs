@@ -4,7 +4,9 @@ import com.itsaur.event.DomainEvent;
 import com.itsaur.model.Company;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.state.Stores;
 
 public class CompanyTopologyBuilder {
@@ -23,38 +25,28 @@ public class CompanyTopologyBuilder {
 
     public Topology build() {
 
-        Topology topology = new Topology();
+        StreamsBuilder builder = new StreamsBuilder();
 
-        topology.addSource(
-                "CompanyEventSource",
-                Serdes.String().deserializer(),
-                eventSerde.deserializer(),
-                EVENTS_TOPIC
-        );
-
-        topology.addProcessor(
-                "CompanyProcessorNode",
-                CompanyProcessor::new,
-                "CompanyEventSource"
-        );
-
-        topology.addStateStore(
+        builder.addStateStore(
                 Stores.keyValueStoreBuilder(
                         Stores.persistentKeyValueStore(COMPANIES_STORE),
                         Serdes.String(),
                         companySerde
-                ),
-                "CompanyProcessorNode"
+                )
         );
 
-        topology.addStateStore(
+        builder.addStateStore(
                 Stores.keyValueStoreBuilder(
                         Stores.persistentKeyValueStore(VAT_COMPANIES_STORE),
                         Serdes.String(),
                         Serdes.String()
-                ),
-                "CompanyProcessorNode"
+                )
         );
-        return topology;
+
+        builder.stream(EVENTS_TOPIC, Consumed.with(Serdes.String(), eventSerde))
+                .filter((key, event) -> event != null && event.getClass().getSimpleName().contains("Company"))
+                .process(CompanyProcessor::new, COMPANIES_STORE, VAT_COMPANIES_STORE);
+
+        return builder.build();
     }
 }

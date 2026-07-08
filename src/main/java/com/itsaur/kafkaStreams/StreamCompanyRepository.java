@@ -22,24 +22,19 @@ public class StreamCompanyRepository implements CompanyRepository {
         return Mono.fromCallable(() -> companiesStore().get(companyId))
                 .subscribeOn(Schedulers.boundedElastic());
     }
+
     @Override
     public Mono<Boolean> existsVat(String vat) {
-        return Mono.fromCallable(() -> vatIndexStore().get(vat))
-                .subscribeOn(Schedulers.boundedElastic()).hasElement();
+        return Mono.fromCallable(() -> vatIndexStore().get(vat) != null)
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
     private ReadOnlyKeyValueStore<String, Company> companiesStore(){
-        if (kafkaStreams.state() != KafkaStreams.State.RUNNING){
-            throw new IllegalStateException("Streams not running, current state: " + kafkaStreams.state());
-        }
         return kafkaStreams.store(StoreQueryParameters.fromNameAndType(
                 CompanyTopologyBuilder.COMPANIES_STORE, QueryableStoreTypes.keyValueStore()));
     }
 
     private ReadOnlyKeyValueStore<String, String> vatIndexStore(){
-        if (kafkaStreams.state() != KafkaStreams.State.RUNNING) {
-            throw new IllegalStateException("Streams not running, current state: " + kafkaStreams.state());
-        }
         return kafkaStreams.store(StoreQueryParameters.fromNameAndType(
                 CompanyTopologyBuilder.VAT_COMPANIES_STORE, QueryableStoreTypes.keyValueStore()));
     }
