@@ -7,6 +7,9 @@ import com.itsaur.config.AppInitializerFactory;
 import com.itsaur.handler.CompanyHandler;
 import com.itsaur.handler.EmployeeHandler;
 import com.itsaur.handler.HttpHandlersFactory;
+import com.itsaur.util.DbConnector;
+import com.itsaur.util.ElasticSearchConfig;
+import com.itsaur.util.RabbitMQConfig;
 import reactor.netty.DisposableServer;
 import reactor.netty.http.server.HttpServer;
 
@@ -15,6 +18,9 @@ public class Application {
 
     public static void main(String[] args) throws Exception {
         AppConfig config = AppConfig.fromEnv();
+        DbConnector.init(config);
+        ElasticSearchConfig.init(config);
+        RabbitMQConfig.init(config);
         AppEnvInitializer initializer = AppInitializerFactory.getInitializer(config.getMode());
         AppContext context = initializer.initialize();
 
