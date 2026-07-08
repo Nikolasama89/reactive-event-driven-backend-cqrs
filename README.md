@@ -1,20 +1,37 @@
-# Employee & Company Management — Event-Driven Backend
+# Employee & Company Management — Event-Driven Backend (CQRS)
 
 A reactive, event-driven backend for managing companies and their employees, built in
 **plain Java with Project Reactor** (no Spring / no DI framework). Writes flow through
-Kafka as domain events; reads are served from projections in Elasticsearch and from
-Kafka Streams state stores.
+domain events; reads are served from a **separate** read model (Elasticsearch projections
+and Kafka Streams state stores) — a CQRS split.
 
-> Personal project built to explore event-driven architecture, reactive Java and
+Its defining feature is that the **persistence/transport layer is pluggable**: the same
+event-driven core runs against different infrastructure implementations, selected at
+startup, without changing any business logic.
+
+> Personal project built to explore event-driven architecture, reactive Java, CQRS and
 > Domain-Driven Design end to end, without leaning on a framework to wire things together.
 
 ---
+
+## Runtime modes
+
+The application runs in one of several **modes**, selected by the `APP_MODE` environment
+variable. Each mode is a distinct implementation of the `AppEnvInitializer` interface,
+chosen at startup by `AppInitializerFactory` (a switch-based **Strategy** implementation).
+The event-driven core — services, domain events, handlers — is identical across modes;
+only the persistence and transport wiring changes.
+
+In **every** mode, reads are served from a separate read model, never from the write path:
+Elasticsearch holds query-optimized projections and Kafka Streams state stores serve
+interactive queries. The read side is updated asynchronously from the events, so it is
+**eventually consistent** by design.
 
 ## Tech stack
 
 | Concern | Technology |
 |---|---|
-| Language / runtime | Java [17? 21?] |
+| Language / runtime | Java 17 
 | Reactive core | Project Reactor |
 | HTTP server | Reactor Netty (`HttpServer`) |
 | Messaging | Apache Kafka (reactor-kafka) |
@@ -23,8 +40,6 @@ Kafka Streams state stores.
 | Search / read model | Elasticsearch |
 | Messaging (legacy path) | RabbitMQ |
 | Infra | Docker Compose |
-
-*(Adjust the Java version and drop RabbitMQ from the table if it's no longer used.)*
 
 ---
 
@@ -38,33 +53,30 @@ persistence and projection.
 HTTP request
     │
     ▼
-Service layer ──► publishes DomainEvent to Kafka
-                   (topic per aggregate, key = aggregateId,
-                    event type carried in a Kafka header)
+Service layer ──► publishes DomainEvent
                         │
-        ┌───────────────┼────────────────────┐
-        ▼               ▼                      ▼
-  Postgres          Elasticsearch        Kafka Streams
-  (write model,     (read projections)   (state stores +
-   R2DBC)                                  secondary indexes,
-                                           interactive queries)
+   write model (chosen by AppMode)         read model (always separate)
+     ┌──────────────────┴───────────┐        ┌───────────────┐
+     ▼                              ▼         ▼               ▼
+ PostgreSQL (R2DBC)          Kafka Streams  Elasticsearch   Kafka Streams
+ [Postgres mode]             state stores   projections     interactive
+                             [Kafka mode]                    queries
 ```
 
 Notable pieces:
 
-- **Custom polymorphic (de)serialization** — a single `DomainEvent` type is dispatched
-  by an event-type header, so one topic/consumer can carry multiple event kinds.
-- **Kafka Streams processors** (`CompanyProcessor`, `EmployeeProcessor`) build local
-  state stores with secondary indexes; `StreamCompanyRepository` / `StreamEmployeeRepository`
+- **Pluggable modes** — `AppEnvInitializer` + `AppInitializerFactory` (Strategy) let the
+  same core run on different persistence/transport backends via `APP_MODE`.
+- **Custom polymorphic (de)serialization** — a single `DomainEvent` type is dispatched by
+  an event-type header, so one topic/consumer can carry multiple event kinds.
+- **Kafka Streams processors** (`CompanyProcessor`, `EmployeeProcessor`) build local state
+  stores with secondary indexes; `StreamCompanyRepository` / `StreamEmployeeRepository`
   serve reads through interactive queries against those stores.
 - **Cascade projections** — e.g. a company-name change propagates to every affected
   employee document in Elasticsearch via an update listener.
 - **Composition Root / Pure DI** — everything is wired by hand in `Application.main`
   through `AppConfig`, `AppInitializerFactory` and the `AppMode` strategy, with no
   container doing it magically.
-
-
----
 
 ## Prerequisites
 
@@ -117,20 +129,5 @@ the code.
 
 ---
 
-## API
-
-Employee and company routes are registered by `EmployeeHandler` and `CompanyHandler`.
-
-| Method | Path | Description |
-|---|---|---|
-| `[GET]` | `[/employees]` | `[List employees]` |
-| `[POST]` | `[/employees]` | `[Create an employee]` |
-| `[GET]` | `[/companies]` | `[List companies]` |
-| `[POST]` | `[/companies]` | `[Create a company]` |
-
-*(Fill in your real endpoints — copy them straight from `employeeRoutes` / `companyRoutes`.)*
----
-
 ## Author
-
-Nikolaos Michos
+Nikolaos Michos - github.com/Nikolasama89
