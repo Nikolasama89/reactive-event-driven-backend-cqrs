@@ -103,25 +103,6 @@ All configuration is read from environment variables at startup by `AppConfig.fr
 which fails fast with a clear message if any variable is missing. No credentials live in
 the code.
 
-| Variable | Example | Description |
-|---|---|---|
-| `APP_MODE` | `[YOUR_MODE]` | Selects the runtime strategy (`AppMode` enum) |
-| `DB_HOST` | `127.0.0.1` | PostgreSQL host |
-| `DB_PORT` | `5433` | PostgreSQL port (mapped from 5432 in Compose) |
-| `DB_NAME` | `employeesdb` | Database name |
-| `DB_USER` | `postgres` | Database user |
-| `DB_PASSWORD` | `postgres` | Database password |
-| `ES_HOST` | `localhost` | Elasticsearch host |
-| `ES_PORT` | `9200` | Elasticsearch port |
-| `KAFKA_BOOTSTRAP` | `localhost:9092` | Kafka bootstrap servers |
-| `RABBIT_HOST` | `localhost` | RabbitMQ host |
-| `RABBIT_USER` | `user` | RabbitMQ user |
-| `RABBIT_PASSWORD` | `password` | RabbitMQ password |
-
-`.env` is git-ignored; `.env.example` is committed as a reference.
-
----
-
 ## Local service ports
 
 | Service | URL |
