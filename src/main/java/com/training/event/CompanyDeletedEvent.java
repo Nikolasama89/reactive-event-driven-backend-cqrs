@@ -1,0 +1,20 @@
+package com.training.event;
+
+import com.training.model.CompanyId;
+
+public class CompanyDeletedEvent implements DomainEvent{
+    private final CompanyId companyId;
+
+    public CompanyDeletedEvent(CompanyId companyId) {
+        this.companyId = companyId;
+    }
+
+    public CompanyId getCompanyId() {
+        return companyId;
+    }
+
+    @Override
+    public String aggregateId() {
+        return companyId.toString();
+    }
+}
